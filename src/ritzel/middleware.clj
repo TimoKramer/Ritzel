@@ -4,19 +4,15 @@
    [buddy.auth.backends :as buddy-auth-backends]
    [buddy.auth.middleware :as buddy-auth-middleware]))
 
-;; Define a in-memory relation between tokens and users:
 (def tokens {:2f904e245c1f5 :mopedtobias})
 
-;; Define an authfn, function with the responsibility
-;; to authenticate the incoming token and return an
-;; identity instance
+(def tokens {:2f904e245c1f5 :mopedtobias})
 
 (defn my-authfn
   [request token]
   (let [token (keyword token)]
     (get tokens token nil)))
 
-;; Create an instance
 (def token-backend (buddy-auth-backends/token {:authfn my-authfn :token-name "token"}))
 
 (defn token-auth
