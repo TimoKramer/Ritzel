@@ -1,8 +1,8 @@
 (ns ritzel.middleware
   (:require
-    [buddy.auth :refer [authenticated?]]
-    [buddy.auth.backends :as buddy-auth-backends]
-    [buddy.auth.middleware :as buddy-auth-middleware]))
+   [buddy.auth :refer [authenticated?]]
+   [buddy.auth.backends :as buddy-auth-backends]
+   [buddy.auth.middleware :as buddy-auth-middleware]))
 
 (defn auth
   "Middleware used in routes that require authentication. If request is not

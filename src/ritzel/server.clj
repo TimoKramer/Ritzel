@@ -72,122 +72,121 @@
       :get     {:summary "List user stacks."
                 :handler h/list-user-stacks}}]]
    #_["/stacks"
-    ["/:org-name"
-     ["/policypacks"
-      {:swagger {:tags ["stacks" "API"]}
-       :post    {:summary "Renew lease."
-                 :middleware [middleware/token-auth middleware/auth]
-                 :handler h/renew-lease}}]]
-     ["/:project-name/:stack-name"
-      {:swagger {:tags ["stacks" "API"]}
-       :get     {:summary "List organization stacks."
-                 :middleware [middleware/token-auth middleware/auth]
-                 :handler h/list-organization-stacks}}
-      {:swagger {:tags ["stacks" "API"]}
-       :post    {:summary "Create stack."
-                 :middleware [middleware/token-auth middleware/auth]
-                 :handler h/create-stack}}]
-     ["/export"
-      {:swagger {:tags ["stacks" "API"]}
-       :get     {:summary "Export stack."
-                 :middleware [middleware/token-auth middleware/auth]
-                 :handler h/export-stack}}]
-     ["/import"
-      {:swagger {:tags ["stacks" "API"]}
-       :post    {:summary "Import stack."
-                 :middleware [middleware/token-auth middleware/auth]
-                 :handler h/import-stack}}]
-     ["/encrypt"
-      {:swagger {:tags ["stacks" "API"]}
-       :post    {:summary "Encrypt value."
-                 :middleware [middleware/token-auth middleware/auth]
-                 :handler h/encrypt-value}}]
-     ["/decrypt"
-      {:swagger {:tags ["stacks" "API"]}
-       :post    {:summary "Decrypt value."
-                 :middleware [middleware/token-auth middleware/auth]
-                 :handler h/decrypt-value}}]
-     ["/logs"
-      {:swagger {:tags ["stacks" "API"]}
-       :get     {:summary "Get stack logs."
-                 :middleware [middleware/token-auth middleware/auth]
-                 :handler h/get-stack-logs}}]
-     ["/updates"
-      {:swagger {:tags ["stacks" "API"]}
-       :get     {:summary "Get stack updates."
-                 :middleware [middleware/token-auth middleware/auth]
-                 :handler h/get-stack-updates}}
-      ["/latest"
-       {:swagger {:tags ["stacks" "API"]}
-        :get     {:summary "Get latest stack update."
-                  :middleware [middleware/token-auth middleware/auth]
-                  :handler h/get-latest-stack-update}}]
-      ["/:version"
-       {:swagger {:tags ["stacks" "API"]}
-        :get     {:summary "Get stack update."
-                  :middleware [middleware/token-auth middleware/auth]
-                  :handler h/get-stack-update}}
-       ["/contents"
-        ["/files"
-         {:swagger {:tags ["stacks" "API"]}
-          :get     {:summary "Get update contents files."
-                    :middleware [middleware/token-auth middleware/auth]
-                    :handler h/get-update-contents-files}}]
-        ["/file/*path"
-         {:swagger {:tags ["stacks" "API"]}
-          :get     {:summary "Get update contents file path."
-                    :middleware [middleware/token-auth middleware/auth]
-                    :handler h/get-update-contents-file-path}}]]]]
-     ["/destroy"
-      {:swagger {:tags ["stacks" "API"]}
-       :post    {:summary "Destroy stack."
-                 :middleware [middleware/token-auth middleware/auth]
-                 :handler h/create-destroy}}]
-     ["/preview"
-      {:swagger {:tags ["stacks" "API"]}
-       :post    {:summary "Preview stack."
-                 :middleware [middleware/token-auth middleware/auth]
-                 :handler h/create-preview}}]
-     ["/update"
-      {:swagger {:tags ["stacks" "API"]}
-       :post    {:summary "Update stack."
-                 :middleware [middleware/token-auth middleware/auth]
-                 :handler h/create-update}}]
-     ["/:update-kind/:update-id"
-      {:swagger {:tags ["stacks" "API"]}
-       :get     {:summary "Get update status."
-                 :middleware [middleware/token-auth middleware/auth]
-                 :handler h/get-update-status}}
-      {:swagger {:tags ["stacks" "API"]}
-       :post    {:summary "Start update."
-                 :middleware [middleware/token-auth middleware/auth]
-                 :handler h/start-update}}
-      ["/checkpoint"
-       {:swagger {:tags ["stacks" "API"]}
-        :patch   {:summary "Patch checkpoint."
-                  :middleware [middleware/token-auth middleware/auth]
-                  :handler h/patch-checkpoint}}]
-      ["/complete"
-       {:swagger {:tags ["stacks" "API"]}
-        :post    {:summary "Complete update."
-                  :middleware [middleware/token-auth middleware/auth]
-                  :handler h/complete-update}}]
-      ["/events"
-       {:swagger {:tags ["stacks" "API"]}
-        :post    {:summary "Post engine event."
-                  :middleware [middleware/token-auth middleware/auth]
-                  :handler h/post-engine-event}}
-       ["/batch"
+      ["/:org-name"
+       ["/policypacks"
         {:swagger {:tags ["stacks" "API"]}
-         :patch   {:summary "Post engine event batch."
+         :post    {:summary "Renew lease."
                    :middleware [middleware/token-auth middleware/auth]
-                   :handler h/post-engine-event-batch}}]]
-      ["/renew_lease"
+                   :handler h/renew-lease}}]]
+      ["/:project-name/:stack-name"
        {:swagger {:tags ["stacks" "API"]}
-        :patch   {:summary "Renew lease."
+        :get     {:summary "List organization stacks."
                   :middleware [middleware/token-auth middleware/auth]
-                  :handler h/renew-lease}}]]]])
-
+                  :handler h/list-organization-stacks}}
+       {:swagger {:tags ["stacks" "API"]}
+        :post    {:summary "Create stack."
+                  :middleware [middleware/token-auth middleware/auth]
+                  :handler h/create-stack}}]
+      ["/export"
+       {:swagger {:tags ["stacks" "API"]}
+        :get     {:summary "Export stack."
+                  :middleware [middleware/token-auth middleware/auth]
+                  :handler h/export-stack}}]
+      ["/import"
+       {:swagger {:tags ["stacks" "API"]}
+        :post    {:summary "Import stack."
+                  :middleware [middleware/token-auth middleware/auth]
+                  :handler h/import-stack}}]
+      ["/encrypt"
+       {:swagger {:tags ["stacks" "API"]}
+        :post    {:summary "Encrypt value."
+                  :middleware [middleware/token-auth middleware/auth]
+                  :handler h/encrypt-value}}]
+      ["/decrypt"
+       {:swagger {:tags ["stacks" "API"]}
+        :post    {:summary "Decrypt value."
+                  :middleware [middleware/token-auth middleware/auth]
+                  :handler h/decrypt-value}}]
+      ["/logs"
+       {:swagger {:tags ["stacks" "API"]}
+        :get     {:summary "Get stack logs."
+                  :middleware [middleware/token-auth middleware/auth]
+                  :handler h/get-stack-logs}}]
+      ["/updates"
+       {:swagger {:tags ["stacks" "API"]}
+        :get     {:summary "Get stack updates."
+                  :middleware [middleware/token-auth middleware/auth]
+                  :handler h/get-stack-updates}}
+       ["/latest"
+        {:swagger {:tags ["stacks" "API"]}
+         :get     {:summary "Get latest stack update."
+                   :middleware [middleware/token-auth middleware/auth]
+                   :handler h/get-latest-stack-update}}]
+       ["/:version"
+        {:swagger {:tags ["stacks" "API"]}
+         :get     {:summary "Get stack update."
+                   :middleware [middleware/token-auth middleware/auth]
+                   :handler h/get-stack-update}}
+        ["/contents"
+         ["/files"
+          {:swagger {:tags ["stacks" "API"]}
+           :get     {:summary "Get update contents files."
+                     :middleware [middleware/token-auth middleware/auth]
+                     :handler h/get-update-contents-files}}]
+         ["/file/*path"
+          {:swagger {:tags ["stacks" "API"]}
+           :get     {:summary "Get update contents file path."
+                     :middleware [middleware/token-auth middleware/auth]
+                     :handler h/get-update-contents-file-path}}]]]]
+      ["/destroy"
+       {:swagger {:tags ["stacks" "API"]}
+        :post    {:summary "Destroy stack."
+                  :middleware [middleware/token-auth middleware/auth]
+                  :handler h/create-destroy}}]
+      ["/preview"
+       {:swagger {:tags ["stacks" "API"]}
+        :post    {:summary "Preview stack."
+                  :middleware [middleware/token-auth middleware/auth]
+                  :handler h/create-preview}}]
+      ["/update"
+       {:swagger {:tags ["stacks" "API"]}
+        :post    {:summary "Update stack."
+                  :middleware [middleware/token-auth middleware/auth]
+                  :handler h/create-update}}]
+      ["/:update-kind/:update-id"
+       {:swagger {:tags ["stacks" "API"]}
+        :get     {:summary "Get update status."
+                  :middleware [middleware/token-auth middleware/auth]
+                  :handler h/get-update-status}}
+       {:swagger {:tags ["stacks" "API"]}
+        :post    {:summary "Start update."
+                  :middleware [middleware/token-auth middleware/auth]
+                  :handler h/start-update}}
+       ["/checkpoint"
+        {:swagger {:tags ["stacks" "API"]}
+         :patch   {:summary "Patch checkpoint."
+                   :middleware [middleware/token-auth middleware/auth]
+                   :handler h/patch-checkpoint}}]
+       ["/complete"
+        {:swagger {:tags ["stacks" "API"]}
+         :post    {:summary "Complete update."
+                   :middleware [middleware/token-auth middleware/auth]
+                   :handler h/complete-update}}]
+       ["/events"
+        {:swagger {:tags ["stacks" "API"]}
+         :post    {:summary "Post engine event."
+                   :middleware [middleware/token-auth middleware/auth]
+                   :handler h/post-engine-event}}
+        ["/batch"
+         {:swagger {:tags ["stacks" "API"]}
+          :patch   {:summary "Post engine event batch."
+                    :middleware [middleware/token-auth middleware/auth]
+                    :handler h/post-engine-event-batch}}]]
+       ["/renew_lease"
+        {:swagger {:tags ["stacks" "API"]}
+         :patch   {:summary "Renew lease."
+                   :middleware [middleware/token-auth middleware/auth]
+                   :handler h/renew-lease}}]]]])
 
 (def route-opts
   {:reitit.middleware/transform dev/print-request-diffs ;; pretty diffs
