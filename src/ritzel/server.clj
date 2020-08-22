@@ -1,6 +1,7 @@
 (ns ritzel.server
-  (:require [ritzel.handlers :as h]
-            [ritzel.config :as c]
+  (:require [ritzel.handlers :as handlers]
+            [ritzel.config :as config]
+            [ritzel.middleware :as middleware]
             [reitit.ring :as ring]
             [reitit.coercion.spec]
             [reitit.swagger :as swagger]
@@ -16,45 +17,7 @@
             [clojure.spec.alpha :as s]
             [taoensso.timbre :as log]
             [mount.core :refer [defstate]]
-            [ring.adapter.jetty :refer [run-jetty]]
-            [clojure.pprint :refer [pprint]]))
-
-(s/def ::entity any?)
-(s/def ::tx-data (s/coll-of ::entity))
-(s/def ::tx-meta (s/coll-of ::entity))
-(s/def ::transactions (s/keys :req-un [::tx-data] :opt-un [::tx-meta]))
-
-(s/def ::query (s/coll-of any?))
-(s/def ::args (s/coll-of any?))
-(s/def ::limit number?)
-(s/def ::offset number?)
-(s/def ::query-request (s/keys :req-un [::query]
-                               :opt-un [::args ::limit ::offset]))
-
-(s/def ::selector (s/coll-of any?))
-(s/def ::eid any?)
-(s/def ::pull-request (s/keys :req-un [::selector ::eid]))
-
-(s/def ::eids (s/coll-of ::eid))
-(s/def ::pull-many-request (s/keys :req-un [::selector ::eids]))
-
-(s/def ::index #{:eavt :aevt :avet})
-(s/def ::components (s/coll-of any?))
-(s/def ::datoms-request (s/keys :req-un [::index] :opt-un [::components]))
-
-(s/def ::attr keyword?)
-(s/def ::entity-request (s/keys :req-un [::eid] :opt-un [::attr]))
-
-(s/def ::db-name string?)
-(s/def ::query-id number?)
-
-(s/def ::conn-header (s/keys :req-un [::db-name]))
-
-(s/def ::db-hash number?)
-
-(s/def ::db-tx int?)
-(s/def ::db-header (s/keys :req-un [::db-name]
-                           :opt-un [::db-tx]))
+            [ring.adapter.jetty :refer [run-jetty]]))
 
 (def routes
   ["/api"
@@ -64,13 +27,15 @@
                             :description "Pulumi HTTP Backend"}}
            :handler (swagger/create-swagger-handler)}}]
    ["/user"
+    [""
     {:swagger {:tags ["user" "API"]}
      :get     {:summary "Get current user."
-               :handler h/get-current-user}}
+               :middleware [middleware/token-auth middleware/auth]
+               :handler handlers/get-current-user}}]
     ["/stacks"
      {:swagger {:tags ["user" "API"]}
       :get     {:summary "List user stacks."
-                :handler h/list-user-stacks}}]]
+                :handler handlers/list-user-stacks}}]]
    #_["/stacks"
       ["/:org-name"
        ["/policypacks"
@@ -211,6 +176,7 @@
        (ring/routes
         (swagger-ui/create-swagger-ui-handler
          {:path   "/"
+          :url    "/api/swagger.json"
           :config {:validatorUrl     nil
                    :operationsSorter "alpha"}})
         (ring/create-default-handler)))))
@@ -221,6 +187,6 @@
 (defstate server
   :start (do
            (log/debug "Starting server")
-           (start-server c/config))
+           (start-server config/config))
   :stop (.stop server))
 

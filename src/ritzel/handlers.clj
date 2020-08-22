@@ -1,15 +1,11 @@
-(ns ritzel.handlers
-  (:require [ritzel.database :refer [conns]]
-            [datahike.api :as d]
-            [datahike.db :as dd]
-            [datahike.core :as c]))
+(ns ritzel.handlers)
 
 (defn success
   ([data] {:status 200 :body data})
   ([] {:status 200}))
 
-(defn get-current-user []
-  (success))
+(defn get-current-user [request]
+  (success (:identity request)))
 
-(defn list-user-stacks []
+(defn list-user-stacks [request]
   (success))

@@ -12,8 +12,9 @@
   :args (s/cat :config-file string?)
   :ret map?)
 (s/def ::port int?)
+(s/def ::join? boolean?)
 (s/def ::loglevel #{:trace :debug :info :warn :error :fatal :report})
-(s/def ::server-config (s/keys :req-un [::port ::loglevel]))
+(s/def ::server-config (s/keys :req-un [::port ::join? ::loglevel]))
 
 (defn load-config-file [config-file]
   (try
@@ -29,6 +30,7 @@
   (let [config-from-file (load-config-file config-file)
         server-config (merge
                        {:port (int-from-env :ritzel-port 3000)
+                        :join? (bool-from-env :ritzel-join? false)
                         :loglevel (keyword (:ritzel-loglevel env :info))}
                        (:server config-from-file))
         validated-server-config (if (s/valid? ::server-config server-config)
@@ -37,6 +39,7 @@
                                     (log/error "Server configuration error:" (s/explain-data ::server-config server-config))
                                     (log/error "Loading default configuration for server.")
                                     {:port 3000
+                                     :join? false
                                      :loglevel :info}))]
     {:server validated-server-config}))
 
