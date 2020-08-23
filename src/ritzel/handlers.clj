@@ -5,7 +5,7 @@
   ([] {:status 200}))
 
 (defn get-current-user [request]
-  (success (:identity request)))
+  (success {:githublogin (name (:identity request))}))
 
 (defn list-user-stacks [request]
   (success))
