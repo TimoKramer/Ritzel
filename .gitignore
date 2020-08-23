@@ -13,3 +13,13 @@ pom.xml.asc
 .nrepl-port
 .cpcache/
 resources/config.edn
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+.dir-locals.el
+.clj-kondo

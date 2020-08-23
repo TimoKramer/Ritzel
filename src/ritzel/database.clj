@@ -1,47 +1,42 @@
 (ns ritzel.database
   (:require [mount.core :refer [defstate stop start]]
             [taoensso.timbre :as log]
-            [ritzel.config :refer [config]]
-            [datahike.api :as d])
-  (:import [java.util UUID]))
+            [datahike.api :as d]))
 
-(defn init-connections [{:keys [databases]}]
-  (if (nil? databases)
-    (let [_ (when-not (d/database-exists?)
-              (log/infof "Creating database...")
-              (d/create-database)
-              (log/infof "Done"))
-          conn (d/connect)]
-      {(-> @conn :config :name) conn})
-    (reduce
-     (fn [acc {:keys [name] :as cfg}]
-       (when (contains? acc name)
-         (throw (ex-info
-                 (str "A database with name '" name "' already exists. Database names on the transactor should be unique.")
-                 {:event :connection/initialization
-                  :error :database.name/duplicate})))
-       (when-not (d/database-exists? cfg)
-         (log/infof "Creating database...")
-         (d/create-database cfg)
-         (log/infof "Done"))
-       (let [conn (d/connect cfg)]
-         (assoc acc (-> @conn :config :name) conn)))
-     {}
-     databases)))
+(def cfg
+  {:store {:backend :file
+           :path "/tmp/pulumi-db"}
+   :name "pulumi-db"
+   :keep-history? true
+   :schema-flexibility :write})
 
-(defstate conns
+(defn init-connections [db-config]
+  (let [exists? (d/database-exists? db-config)]
+    (when-not exists?
+      (log/infof "Creating database...")
+      (d/create-database db-config)
+      (log/infof "Done"))
+    (let [conn (d/connect db-config)]
+      (d/transact conn [{:db/ident :stack:name
+                               :db/valueType :db.type/string
+                               :db/cardinality :db.cardinality/one}
+                              {:db/ident :stack:org-name
+                               :db/valueType :db.type/string
+                               :db/cardinality :db.cardinality/one}
+                              {:db/ident :stack:project-name
+                               :db/valueType :db.type/string
+                               :db/cardinality :db.cardinality/one}])
+      conn)))
+
+(defstate connection
   :start (do
-           (log/debug "Connecting to databases with config: " (str config))
-           (init-connections config))
-  :stop (for [conn (vals conns)]
-          (d/release conn)))
+           (log/debug "Connecting to databases with config: " cfg)
+           (init-connections cfg))
+  :stop (d/release connection))
 
 (defn cleanup-databases []
-  (stop #'ritzel.database/conns)
-  (doall
-   (for [cfg (:databases config)]
-     (do
-       (println "Purging " cfg " ...")
-       (d/delete-database cfg)
-       (println "Done"))))
-  (start #'ritzel.database/conns))
+  (stop #'ritzel.database/connection)
+  (log/info "Purging " cfg " ...")
+  (d/delete-database cfg)
+  (log/info "Done")
+  (start #'ritzel.database/connection))

@@ -40,8 +40,10 @@
                                     (log/error "Loading default configuration for server.")
                                     {:port 3000
                                      :join? false
-                                     :loglevel :info}))]
-    {:server validated-server-config}))
+                                     :loglevel :info}))
+        datahike-configs (:databases config-from-file)]
+    {:server validated-server-config
+     :databases datahike-configs}))
 
 (defstate config
   :start (do
