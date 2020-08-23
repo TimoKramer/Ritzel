@@ -19,7 +19,8 @@
             [mount.core :refer [defstate]]
             [ring.adapter.jetty :refer [run-jetty]]))
 
-(s/def ::authorization string?)
+(def authorization-regex #"^token .*")
+(s/def ::authorization (s/and string? #(re-matches authorization-regex %)))
 (s/def ::authorization-header (s/keys :req-un [::authorization]))
 
 (def routes

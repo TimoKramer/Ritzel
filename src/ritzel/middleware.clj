@@ -6,8 +6,6 @@
 
 (def tokens {:2f904e245c1f5 :mopedtobias})
 
-(def tokens {:2f904e245c1f5 :mopedtobias})
-
 (defn my-authfn
   [request token]
   (let [token (keyword token)]
