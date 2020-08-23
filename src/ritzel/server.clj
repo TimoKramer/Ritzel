@@ -19,6 +19,9 @@
             [mount.core :refer [defstate]]
             [ring.adapter.jetty :refer [run-jetty]]))
 
+(s/def ::authorization string?)
+(s/def ::authorization-header (s/keys :req-un [::authorization]))
+
 (def routes
   ["/api"
    ["/swagger.json"
@@ -30,6 +33,7 @@
     [""
     {:swagger {:tags ["user" "API"]}
      :get     {:summary "Get current user."
+               :parameters {:header ::authorization-header}
                :middleware [middleware/token-auth middleware/auth]
                :handler handlers/get-current-user}}]
     ["/stacks"
