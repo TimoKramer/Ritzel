@@ -3,7 +3,7 @@
 ## Why
 
 Pulumi is a great concept and I will always prefer to write some code over writing yaml.
-You can use Pulumi with a local file backend, with cloud blob stores and with the 
+You can use Pulumi with a local file backend, with cloud blob stores and with the
 proprietary pulumi service. All of them are fine but with a team working on one infra
 you need to store the current state centrally and do some locking to avoid concurrent
 changes on one resource.
@@ -20,3 +20,18 @@ service. And this is what I would love to see as features in this project.
 - Up
 - Destroy
 - Stack Remove
+
+## Data
+
+- Stacks
+  ```
+  {:stacks [{:orgName "datahike"
+             :projectName "daas"
+             :stackName "dev"}]}
+  ```
+- Updates
+- Users and Tokens
+
+## Architecture
+
+![Ritzel Architecture](doc/state_saas.png)

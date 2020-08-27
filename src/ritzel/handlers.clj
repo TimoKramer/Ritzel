@@ -9,7 +9,7 @@
   ([] {:status 200}))
 
 (defn get-current-user [request]
-  (success {:githublogin (name (:identity request))}))
+  (success {:githubLogin (name (:identity request))}))
 
 (s/def ::org-name string?)
 (s/def ::project-name string?)
@@ -20,9 +20,14 @@
                                :opt-un [::last-update ::resource-count]))
 
 (defn list-user-stacks [request]
-  (success))
+  (success {:stacks [{:orgName "mopedtobias"
+                      :projectName "foobar"
+                      :stackName "muh"}]}))
 
-(defn list-organization-stacks [request]
+;; TODO
+(defn list-organization-stacks
+  "https://github.com/pulumi/pulumi/blob/master/pkg/backend/httpstate/client/client.go#L211"
+  [request]
   (success))
 
 (defn create-stack [{:keys [db-connection body-params path-params]}]
@@ -42,18 +47,18 @@
   (d/transact conn [{:db/ident :stack:name
                                     :db/valueType :db.type/string
                                     :db/cardinality :db.cardinality/one}
-                                   {:db/ident :stack:org-name
-                                    :db/valueType :db.type/string
-                                    :db/cardinality :db.cardinality/one}
-                                   {:db/ident :stack:project-name
-                                    :db/valueType :db.type/string
-                                    :db/cardinality :db.cardinality/one}
-                                   {:db/ident :stack:last-update
-                                    :db/valueType :db.type/long
-                                    :db/cardinality :db.cardinality/one}
-                                   {:db/ident :stack:resource-count
-                                    :db/valueType :db.type/long
-                                    :db/cardinality :db.cardinality/one}])
+                    {:db/ident :stack:org-name
+                     :db/valueType :db.type/string
+                     :db/cardinality :db.cardinality/one}
+                    {:db/ident :stack:project-name
+                     :db/valueType :db.type/string
+                     :db/cardinality :db.cardinality/one}
+                    {:db/ident :stack:last-update
+                     :db/valueType :db.type/long
+                     :db/cardinality :db.cardinality/one}
+                    {:db/ident :stack:resource-count
+                     :db/valueType :db.type/long
+                     :db/cardinality :db.cardinality/one}])
   (get database/connection "pulumi-db")
   conn
   (d/datoms :stack:name)

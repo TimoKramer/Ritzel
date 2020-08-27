@@ -24,9 +24,18 @@
 (s/def ::authorization (s/and string? #(re-matches authorization-regex %)))
 (s/def ::authorization-header (s/keys :req-un [::authorization]))
 
-(s/def ::stackname string?)
+(s/def ::stackName string?)
+(s/def ::projectName string?)
+(s/def ::orgName string?)
+(s/def ::version int?)
+(s/def ::activeUpdate string?)
 (s/def ::tags (s/map-of string? string?))
-(s/def ::create-stack-body (s/keys :req-un [::stackName] :opt-un [::tags]))
+(s/def ::create-stack-body (s/keys :req-un [::stackName]
+                                   :opt-un [::tags]))
+
+(s/def ::stack (s/keys :req-un [::stackName ::projectName ::orgName]
+                       :opt-un [::tags ::version ::activeUpdate]))
+(s/def ::stacks (s/coll-of ::stack))
 
 (def routes
   ["/api"
@@ -40,23 +49,31 @@
      {:swagger {:tags ["user" "API"]}
       :get     {:summary "Get current user."
                 :parameters {:header ::authorization-header}
+                :responses {200 {:body {:githubLogin string?}}}
                 :middleware [middleware/token-auth middleware/auth]
                 :handler handlers/get-current-user}}]
     ["/stacks"
      {:swagger {:tags ["user" "API"]}
       :get     {:summary "List user stacks."
+                :parameters {:header ::authorization-header}
+                :responses {200 {:body {:stacks ::stacks}}}
+                :middleware [middleware/token-auth middleware/auth]
                 :handler handlers/list-user-stacks}}]]
    ["/stacks"
     ["/:org-name/:project-name"
      {:swagger {:tags ["stacks" "API"]}
       :get     {:summary "List organization stacks."
+                :parameters {:header ::authorization-header}
+                :responses {200 {:body {:stacks ::stacks}}}
                 :middleware [middleware/token-auth middleware/auth]
                 :handler handlers/list-organization-stacks}
       :post    {:summary "Create stack."
                 :parameters {:header ::authorization-header
                              :body ::create-stack-body}
+                :responses {200 {:body map?}}
                 :middleware [middleware/token-auth middleware/auth]
-                :handler handlers/create-stack}}]
+                :handler handlers/create-stack}}]]])
+    ;;["/:org-name/:project-name"]
     ;;["/export"
     ;; {:swagger {:tags ["stacks" "API"]}
     ;;  :get     {:summary "Export stack."
@@ -157,7 +174,7 @@
     ;;   :patch   {:summary "Renew lease."
     ;;             :middleware [middleware/token-auth middleware/auth]
     ;;             :handler handlers/renew-lease}}]]
-    ]])
+
 
 (defn wrap-db-connection [handler]
   (fn [request]
