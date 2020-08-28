@@ -59,6 +59,12 @@
                 :responses {200 {:body {:stacks ::stacks}}}
                 :middleware [middleware/token-auth middleware/auth]
                 :handler handlers/list-user-stacks}}]]
+   ["/cli/version"
+     {:swagger {:tags ["user" "API"]}
+      :get     {:summary "Get information about versions of the CLI."
+                :responses {200 {:body {:latestVersion string?
+                                        :oldestWithoutWarning string?}}}
+                :handler handlers/get-cli-version-info}}]
    ["/stacks"
     ["/:org-name/:project-name"
      {:swagger {:tags ["stacks" "API"]}

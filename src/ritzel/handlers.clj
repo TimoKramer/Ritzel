@@ -24,6 +24,10 @@
                       :projectName "foobar"
                       :stackName "muh"}]}))
 
+(defn get-cli-version-info [request]
+  (success {:latestVersion "2.9.0"
+            :oldestWithoutWarning "2.9.0"}))
+
 ;; TODO
 (defn list-organization-stacks
   "https://github.com/pulumi/pulumi/blob/master/pkg/backend/httpstate/client/client.go#L211"
