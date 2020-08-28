@@ -67,6 +67,7 @@
                 :handler handlers/get-cli-version-info}}]
    ["/stacks"
     ["/:org-name/:project-name"
+     ;;TODO List Organization stacks
      {:swagger {:tags ["stacks" "API"]}
       :get     {:summary "List organization stacks."
                 :parameters {:header ::authorization-header}

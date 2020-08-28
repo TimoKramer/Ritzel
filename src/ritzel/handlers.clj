@@ -28,9 +28,9 @@
   (success {:latestVersion "2.9.0"
             :oldestWithoutWarning "2.9.0"}))
 
-;; TODO
 (defn list-organization-stacks
-  "https://github.com/pulumi/pulumi/blob/master/pkg/backend/httpstate/client/client.go#L211"
+  "Seems not implemented
+   https://github.com/pulumi/pulumi/blob/66bd3f4aa8f9a90d3de667828dda4bed6e115f6b/pkg/cmd/pulumi/stack_ls.go"
   [request]
   (success))
 
