@@ -20,12 +20,12 @@
       (d/transact conn [{:db/ident :stack:name
                                :db/valueType :db.type/string
                                :db/cardinality :db.cardinality/one}
-                              {:db/ident :stack:org-name
-                               :db/valueType :db.type/string
-                               :db/cardinality :db.cardinality/one}
-                              {:db/ident :stack:project-name
-                               :db/valueType :db.type/string
-                               :db/cardinality :db.cardinality/one}])
+                        {:db/ident :stack:org-name
+                         :db/valueType :db.type/string
+                         :db/cardinality :db.cardinality/one}
+                        {:db/ident :stack:project-name
+                         :db/valueType :db.type/string
+                         :db/cardinality :db.cardinality/one}])
       conn)))
 
 (defstate connection

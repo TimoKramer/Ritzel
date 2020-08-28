@@ -23,19 +23,22 @@
 (def authorization-regex #"^token .*")
 (s/def ::authorization (s/and string? #(re-matches authorization-regex %)))
 (s/def ::authorization-header (s/keys :req-un [::authorization]))
-
 (s/def ::stackName string?)
 (s/def ::projectName string?)
 (s/def ::orgName string?)
 (s/def ::version int?)
 (s/def ::activeUpdate string?)
 (s/def ::tags (s/map-of string? string?))
+(s/def ::deployment map?)
+(s/def ::updateId string?)
+
 (s/def ::create-stack-body (s/keys :req-un [::stackName]
                                    :opt-un [::tags]))
-
 (s/def ::stack (s/keys :req-un [::stackName ::projectName ::orgName]
                        :opt-un [::tags ::version ::activeUpdate]))
 (s/def ::stacks (s/coll-of ::stack))
+(s/def ::untyped-deployment (s/keys :req-un [::deployment ::version]))
+(s/def ::import-response (s/keys :req-un [::updateId]))
 
 (def routes
   ["/api"
@@ -60,37 +63,48 @@
                 :middleware [middleware/token-auth middleware/auth]
                 :handler handlers/list-user-stacks}}]]
    ["/cli/version"
-     {:swagger {:tags ["user" "API"]}
+     {:swagger {:tags ["cli" "API"]}
       :get     {:summary "Get information about versions of the CLI."
                 :responses {200 {:body {:latestVersion string?
                                         :oldestWithoutWarning string?}}}
                 :handler handlers/get-cli-version-info}}]
    ["/stacks"
+   ;;TODO List Organization stacks
     ["/:org-name/:project-name"
-     ;;TODO List Organization stacks
      {:swagger {:tags ["stacks" "API"]}
-      :get     {:summary "List organization stacks."
-                :parameters {:header ::authorization-header}
-                :responses {200 {:body {:stacks ::stacks}}}
-                :middleware [middleware/token-auth middleware/auth]
-                :handler handlers/list-organization-stacks}
       :post    {:summary "Create stack."
                 :parameters {:header ::authorization-header
                              :body ::create-stack-body}
                 :responses {200 {:body map?}}
                 :middleware [middleware/token-auth middleware/auth]
-                :handler handlers/create-stack}}]]])
-    ;;["/:org-name/:project-name"]
-    ;;["/export"
-    ;; {:swagger {:tags ["stacks" "API"]}
-    ;;  :get     {:summary "Export stack."
-    ;;            :middleware [middleware/token-auth middleware/auth]
-    ;;            :handler handlers/export-stack}}]
-    ;;["/import"
-    ;; {:swagger {:tags ["stacks" "API"]}
-    ;;  :post    {:summary "Import stack."
-    ;;            :middleware [middleware/token-auth middleware/auth]
-    ;;            :handler handlers/import-stack}}]
+                :handler handlers/create-stack}}
+     ["/:stack-name"
+      {:swagger {:tags ["stacks" "API"]}
+       :get    {:summery "Get stack."
+                :parameters {:header ::authorization-header}
+                :responses {200 {:body ::stack}}
+                :middleware [middleware/token-auth middleware/auth]
+                :handler handlers/get-stack}
+       :delete {:summary "Delete stack."
+                :parameters {:header ::authorization-header}
+                :responses {204 {}}
+                :middleware [middleware/token-auth middleware/auth]
+                :handler handlers/delete-stack}}
+      ["/export"
+       {:swagger {:tags ["stacks" "API"]}
+        :get {:summary "Export stack."
+              :parameters {:header ::authorization-header}
+              :responses {200 {:body ::untyped-deployment}}
+              :middleware [middleware/token-auth middleware/auth]
+              :handler handlers/export-stack}}]
+      ["/import"
+       {:swagger {:tags ["stacks" "API"]}
+        :post    {:summary "Import stack."
+                  :parameters {:header ::authorization-header
+                               :body ::untyped-deployment}
+                  :responses {200 {:body ::import-response}}
+                  :middleware [middleware/token-auth middleware/auth]
+                  :handler handlers/import-stack}}]]]]])
     ;;["/encrypt"
     ;; {:swagger {:tags ["stacks" "API"]}
     ;;  :post    {:summary "Encrypt value."
