@@ -67,6 +67,19 @@
 (defn import-stack [request]
   (success {:updateId "24f1a28a-0549-4848-b35d-f986d05c6b1b"}))
 
+(defn get-stack-updates [request]
+  (success {:updates [{:config {},
+                       :endTime 1598622551,
+                       :environment {},
+                       :kind "import",
+                       :message "",
+                       :resourceChanges {:create 0
+                                         :delete 0
+                                         :same 0
+                                         :update 0}
+                       :result "succeeded",
+                       :startTime 1598622551,
+                       :version 0}]}))
 
 (comment
   (type (int 3))

@@ -28,17 +28,26 @@
 (s/def ::orgName string?)
 (s/def ::version int?)
 (s/def ::activeUpdate string?)
-(s/def ::tags (s/map-of string? string?))
-(s/def ::deployment map?)
 (s/def ::updateId string?)
-
+(s/def ::config map?)
+(s/def ::endTime int?)
+(s/def ::environment map?)
+(s/def ::kind #{"import" "destroy" "rename" "refresh" "preview" "update"}) ;;https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/history.go#L25-L38)
+(s/def ::message string?)
+(s/def ::resourceChanges (s/map-of #{:create :delete :same :update} (s/and int? #(>= % 0)))) ;;https://github.com/pulumi/pulumi/blob/master/pkg/engine/update.go#L143)
+(s/def ::result #{"in-progress" "succeeded" "failed"}) ;;https://github.com/pulumi/pulumi/blob/master/pkg/backend/updates.go#L35-L42)
+(s/def ::startTime int?)
+(s/def ::tags (s/map-of string? string?))
 (s/def ::create-stack-body (s/keys :req-un [::stackName]
                                    :opt-un [::tags]))
 (s/def ::stack (s/keys :req-un [::stackName ::projectName ::orgName]
                        :opt-un [::tags ::version ::activeUpdate]))
 (s/def ::stacks (s/coll-of ::stack))
+(s/def ::deployment map?)
 (s/def ::untyped-deployment (s/keys :req-un [::deployment ::version]))
 (s/def ::import-response (s/keys :req-un [::updateId]))
+(s/def ::update (s/keys :req-un [::config ::endTime ::environment ::kind ::message ::resourceChanges ::result ::startTime ::version]))
+(s/def ::updates (s/map-of #{:updates} (s/coll-of ::update)))
 
 (def routes
   ["/api"
@@ -104,7 +113,35 @@
                                :body ::untyped-deployment}
                   :responses {200 {:body ::import-response}}
                   :middleware [middleware/token-auth middleware/auth]
-                  :handler handlers/import-stack}}]]]]])
+                  :handler handlers/import-stack}}]
+      ["/updates"
+       {:swagger {:tags ["stacks" "API"]}
+        :get     {:summary "Get stack updates."
+                  :parameters {:header ::authorization-header}
+                  :responses {200 {:body ::updates}}
+                  :middleware [middleware/token-auth middleware/auth]
+                  :handler handlers/get-stack-updates}}]]]]])
+       ;["/latest"
+       ; {:swagger {:tags ["stacks" "API"]}
+       ;  :get     {:summary "Get latest stack update."
+       ;            :middleware [middleware/token-auth middleware/auth]
+       ;            :handler handlers/get-latest-stack-update}}}
+       ;["/:version"
+       ; {:swagger {:tags ["stacks" "API"]}
+       ;  :get     {:summary "Get stack update."
+       ;            :middleware [middleware/token-auth middleware/auth]
+       ;            :handler handlers/get-stack-update}}
+       ; ["/contents"
+       ;  ["/files"
+       ;   {:swagger {:tags ["stacks" "API"]}
+       ;    :get     {:summary "Get update contents files."
+       ;              :middleware [middleware/token-auth middleware/auth]
+       ;              :handler handlers/get-update-contents-files}}]
+       ;  ["/file/*path"
+       ;   {:swagger {:tags ["stacks" "API"]}
+       ;    :get     {:summary "Get update contents file path."
+       ;              :middleware [middleware/token-auth middleware/auth]
+       ;              :handler handlers/get-update-contents-file-path}}]]]]]]]])
     ;;["/encrypt"
     ;; {:swagger {:tags ["stacks" "API"]}
     ;;  :post    {:summary "Encrypt value."
@@ -120,32 +157,6 @@
     ;;  :get     {:summary "Get stack logs."
     ;;            :middleware [middleware/token-auth middleware/auth]
     ;;            :handler handlers/get-stack-logs}}]
-    ;;["/updates"
-    ;; {:swagger {:tags ["stacks" "API"]}
-    ;;  :get     {:summary "Get stack updates."
-    ;;            :middleware [middleware/token-auth middleware/auth]
-    ;;            :handler handlers/get-stack-updates}}
-    ;; ["/latest"
-    ;;  {:swagger {:tags ["stacks" "API"]}
-    ;;   :get     {:summary "Get latest stack update."
-    ;;             :middleware [middleware/token-auth middleware/auth]
-    ;;             :handler handlers/get-latest-stack-update}}]
-    ;; ["/:version"
-    ;;  {:swagger {:tags ["stacks" "API"]}
-    ;;   :get     {:summary "Get stack update."
-    ;;             :middleware [middleware/token-auth middleware/auth]
-    ;;             :handler handlers/get-stack-update}}
-    ;;  ["/contents"
-    ;;   ["/files"
-    ;;    {:swagger {:tags ["stacks" "API"]}
-    ;;     :get     {:summary "Get update contents files."
-    ;;               :middleware [middleware/token-auth middleware/auth]
-    ;;               :handler handlers/get-update-contents-files}}]
-    ;;   ["/file/*path"
-    ;;    {:swagger {:tags ["stacks" "API"]}
-    ;;     :get     {:summary "Get update contents file path."
-    ;;               :middleware [middleware/token-auth middleware/auth]
-    ;;               :handler handlers/get-update-contents-file-path}}]]]]
     ;;["/destroy"
     ;; {:swagger {:tags ["stacks" "API"]}
     ;;  :post    {:summary "Destroy stack."
@@ -201,7 +212,21 @@
   (fn [request]
     (handler (assoc request :db-connection database/connection))))
 
-(comment (val (first database/connection)))
+(comment
+  (val (first database/connection))
+  (s/explain seq? {:foo "bar"})
+  (println (s/valid? ::updates {:updates [{:config {},
+                                           :endTime 1598622551,
+                                           :environment {},
+                                           :kind "import",
+                                           :message "",
+                                           :resourceChanges {:create 0
+                                                             :delete 0
+                                                             :same 0
+                                                             :update 0}
+                                           :result "succeeded",
+                                           :startTime 1598622551,
+                                           :version 0}]})))
 
 (def route-opts
   {:reitit.middleware/transform dev/print-request-diffs ;; pretty diffs
@@ -214,7 +239,7 @@
                             parameters/parameters-middleware
                             muuntaja/format-negotiate-middleware
                             muuntaja/format-response-middleware
-                            exception/exception-middleware
+                            ;exception/exception-middleware
                             muuntaja/format-request-middleware
                             coercion/coerce-response-middleware
                             coercion/coerce-request-middleware
