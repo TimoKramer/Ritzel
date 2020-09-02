@@ -29,6 +29,7 @@
 (s/def ::version int?)
 (s/def ::activeUpdate string?)
 (s/def ::updateId string?)
+(s/def ::ciphertext string?)
 (s/def ::config map?)
 (s/def ::endTime int?)
 (s/def ::environment map?)
@@ -46,8 +47,11 @@
 (s/def ::deployment map?)
 (s/def ::untyped-deployment (s/keys :req-un [::deployment ::version]))
 (s/def ::import-response (s/keys :req-un [::updateId]))
-(s/def ::update (s/keys :req-un [::config ::endTime ::environment ::kind ::message ::resourceChanges ::result ::startTime ::version]))
-(s/def ::updates (s/map-of #{:updates} (s/coll-of ::update)))
+(s/def ::encrypt-decrypt (s/keys :req-un [::ciphertext]))
+(s/def ::update (s/keys :req-un [::config ::endTime ::environment ::kind ::message ::resourceChanges ::result ::startTime ::version])) ;https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/history.go#L84
+(s/def ::updates (s/or :nil nil? :update (s/map-of #{:updates} (s/coll-of ::update))))
+(s/def ::info ::update)
+(s/def ::info-update (s/keys :req-un [::info]))
 
 (def routes
   ["/api"
@@ -72,13 +76,13 @@
                 :middleware [middleware/token-auth middleware/auth]
                 :handler handlers/list-user-stacks}}]]
    ["/cli/version"
-     {:swagger {:tags ["cli" "API"]}
-      :get     {:summary "Get information about versions of the CLI."
-                :responses {200 {:body {:latestVersion string?
-                                        :oldestWithoutWarning string?}}}
-                :handler handlers/get-cli-version-info}}]
+    {:swagger {:tags ["cli" "API"]}
+     :get     {:summary "Get information about versions of the CLI."
+               :responses {200 {:body {:latestVersion string?
+                                       :oldestWithoutWarning string?}}}
+               :handler handlers/get-cli-version-info}}]
    ["/stacks"
-   ;;TODO List Organization stacks
+   ;;TODO List Organization stacks seems not implemented
     ["/:org-name/:project-name"
      {:swagger {:tags ["stacks" "API"]}
       :post    {:summary "Create stack."
@@ -114,99 +118,57 @@
                   :responses {200 {:body ::import-response}}
                   :middleware [middleware/token-auth middleware/auth]
                   :handler handlers/import-stack}}]
+      ; TODO might be good to use https://www.pulumi.com/docs/intro/concepts/config/#available-encryption-providers
+      #_["/encrypt"
+         {:swagger {:tags ["stacks" "API"]}
+          :post    {:summary "Encrypt value."
+                    :parameters {:header ::authorization-header
+                                 :body string?}
+                    :responses {200 {:body ::encrypt-decrypt}}
+                    :middleware [middleware/token-auth middleware/auth]
+                    :handler handlers/encrypt-value}}]
+      #_["/decrypt"
+         {:swagger {:tags ["stacks" "API"]}
+          :post    {:summary "Decrypt value."
+                    :parameters {:header ::authorization-header
+                                 :body ::encrypt-decrypt}
+                    :responses {200 {:body string?}}
+                    :middleware [middleware/token-auth middleware/auth]
+                    :handler handlers/decrypt-value}}]
+      ; TODO Get Logs seems not implemented
+      #_["/logs"
+         {:swagger {:tags ["stacks" "API"]}
+          :get     {:summary "Get stack logs."
+                    :middleware [middleware/token-auth middleware/auth]
+                    :handler handlers/get-stack-logs}}]
       ["/updates"
        {:swagger {:tags ["stacks" "API"]}
         :get     {:summary "Get stack updates."
                   :parameters {:header ::authorization-header}
                   :responses {200 {:body ::updates}}
                   :middleware [middleware/token-auth middleware/auth]
-                  :handler handlers/get-stack-updates}}]]]]])
-       ;["/latest"
-       ; {:swagger {:tags ["stacks" "API"]}
-       ;  :get     {:summary "Get latest stack update."
-       ;            :middleware [middleware/token-auth middleware/auth]
-       ;            :handler handlers/get-latest-stack-update}}}
-       ;["/:version"
-       ; {:swagger {:tags ["stacks" "API"]}
-       ;  :get     {:summary "Get stack update."
-       ;            :middleware [middleware/token-auth middleware/auth]
-       ;            :handler handlers/get-stack-update}}
-       ; ["/contents"
-       ;  ["/files"
-       ;   {:swagger {:tags ["stacks" "API"]}
-       ;    :get     {:summary "Get update contents files."
-       ;              :middleware [middleware/token-auth middleware/auth]
-       ;              :handler handlers/get-update-contents-files}}]
-       ;  ["/file/*path"
-       ;   {:swagger {:tags ["stacks" "API"]}
-       ;    :get     {:summary "Get update contents file path."
-       ;              :middleware [middleware/token-auth middleware/auth]
-       ;              :handler handlers/get-update-contents-file-path}}]]]]]]]])
-    ;;["/encrypt"
-    ;; {:swagger {:tags ["stacks" "API"]}
-    ;;  :post    {:summary "Encrypt value."
-    ;;            :middleware [middleware/token-auth middleware/auth]
-    ;;            :handler handlers/encrypt-value}}]
-    ;;["/decrypt"
-    ;; {:swagger {:tags ["stacks" "API"]}
-    ;;  :post    {:summary "Decrypt value."
-    ;;            :middleware [middleware/token-auth middleware/auth]
-    ;;            :handler handlers/decrypt-value}}]
-    ;;["/logs"
-    ;; {:swagger {:tags ["stacks" "API"]}
-    ;;  :get     {:summary "Get stack logs."
-    ;;            :middleware [middleware/token-auth middleware/auth]
-    ;;            :handler handlers/get-stack-logs}}]
-    ;;["/destroy"
-    ;; {:swagger {:tags ["stacks" "API"]}
-    ;;  :post    {:summary "Destroy stack."
-    ;;            :middleware [middleware/token-auth middleware/auth]
-    ;;            :handler handlers/create-destroy}}]
-    ;;["/preview"
-    ;; {:swagger {:tags ["stacks" "API"]}
-    ;;  :post    {:summary "Preview stack."
-    ;;            :middleware [middleware/token-auth middleware/auth]
-    ;;            :handler handlers/create-preview}}]
-    ;;["/update"
-    ;; {:swagger {:tags ["stacks" "API"]}
-    ;;  :post    {:summary "Update stack."
-    ;;            :middleware [middleware/token-auth middleware/auth]
-    ;;            :handler handlers/create-update}}]
-    ;;["/:update-kind/:update-id"
-    ;; {:swagger {:tags ["stacks" "API"]}
-    ;;  :get     {:summary "Get update status."
-    ;;            :middleware [middleware/token-auth middleware/auth]
-    ;;            :handler handlers/get-update-status}}
-    ;; {:swagger {:tags ["stacks" "API"]}
-    ;;  :post    {:summary "Start update."
-    ;;            :middleware [middleware/token-auth middleware/auth]
-    ;;            :handler handlers/start-update}}
-    ;; ["/checkpoint"
-    ;;  {:swagger {:tags ["stacks" "API"]}
-    ;;   :patch   {:summary "Patch checkpoint."
-    ;;             :middleware [middleware/token-auth middleware/auth]
-    ;;             :handler handlers/patch-checkpoint}}]
-    ;; ["/complete"
-    ;;  {:swagger {:tags ["stacks" "API"]}
-    ;;   :post    {:summary "Complete update."
-    ;;             :middleware [middleware/token-auth middleware/auth]
-    ;;             :handler handlers/complete-update}}]
-    ;; ["/events"
-    ;;  {:swagger {:tags ["stacks" "API"]}
-    ;;   :post    {:summary "Post engine event."
-    ;;             :middleware [middleware/token-auth middleware/auth]
-    ;;             :handler handlers/post-engine-event}}
-    ;;  ["/batch"
-    ;;   {:swagger {:tags ["stacks" "API"]}
-    ;;    :patch   {:summary "Post engine event batch."
-    ;;              :middleware [middleware/token-auth middleware/auth]
-    ;;              :handler handlers/post-engine-event-batch}}]]
-    ;; ["/renew_lease"
-    ;;  {:swagger {:tags ["stacks" "API"]}
-    ;;   :patch   {:summary "Renew lease."
-    ;;             :middleware [middleware/token-auth middleware/auth]
-    ;;             :handler handlers/renew-lease}}]]
-
+                  :handler handlers/get-stack-updates}}
+       ["/:version" ;https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/history.go#L84
+        {:swagger {:tags ["stacks" "API"]}
+         :get     {:summary "Get stack update."
+                   :parameters {:header ::authorization-header}
+                   :responses {200 {:body ::info-update}}
+                   :middleware [middleware/token-auth middleware/auth]
+                   :handler handlers/get-stack-update}}
+        #_["/contents"
+         ["/files"
+          {:swagger {:tags ["stacks" "API"]}
+           :get     {:summary "Get update contents files."
+                     :parameters {:header ::authorization-header}
+                     :responses {200 {:body ::latest-update}}
+                     :middleware [middleware/token-auth middleware/auth]
+                     :handler handlers/get-update-contents-files}}]
+         ["/file/*path"
+          {:swagger {:tags ["stacks" "API"]}
+           :get     {:summary "Get update contents file path."
+                     :parameters {:header ::authorization-header}
+                     :middleware [middleware/token-auth middleware/auth]
+                     :handler handlers/get-update-contents-file-path}}]]]]]]]])
 
 (defn wrap-db-connection [handler]
   (fn [request]
@@ -239,7 +201,7 @@
                             parameters/parameters-middleware
                             muuntaja/format-negotiate-middleware
                             muuntaja/format-response-middleware
-                            ;exception/exception-middleware
+                            exception/exception-middleware
                             muuntaja/format-request-middleware
                             coercion/coerce-response-middleware
                             coercion/coerce-request-middleware

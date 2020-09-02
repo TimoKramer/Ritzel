@@ -45,18 +45,17 @@
   ;;                   [?e :stack:org-name org-name]
   ;;                 @db-connection}]
   (success
-    {:activeUpdate ""
-     :orgName "mopedtobias"
-     :projectName "foobar"
-     :stackName "dev"
-     :tags {":gitHub:owner" "mopedtobias"
-            ":pulumi:description" "A minimal Azure Python program"
-            ":pulumi:runtime" "python"}}))
+   {:activeUpdate ""
+    :orgName "mopedtobias"
+    :projectName "foobar"
+    :stackName "dev"
+    :tags {":gitHub:owner" "mopedtobias"
+           ":pulumi:description" "A minimal Azure Python program"
+           ":pulumi:runtime" "python"}}))
 
 (defn delete-stack [request]
   ;; TODO retract
   {:status 204})
-
 
 (defn export-stack [request]
   (success {:deployment {:manifest {:magic ""
@@ -67,7 +66,7 @@
 (defn import-stack [request]
   (success {:updateId "24f1a28a-0549-4848-b35d-f986d05c6b1b"}))
 
-(defn get-stack-updates [request]
+(defn get-stack-updates [request] ;TODO can be empty as well
   (success {:updates [{:config {},
                        :endTime 1598622551,
                        :environment {},
@@ -80,6 +79,21 @@
                        :result "succeeded",
                        :startTime 1598622551,
                        :version 0}]}))
+
+(defn get-stack-update [{{:keys [org-name project-name stack-name version]} :path-params db-connection :db-connection}]
+;TODO 404 on empty TODO get version number from DB TODO when version=latest get latest update
+  (success {:info {:updates [{:config {},
+                              :endTime 1598622551,
+                              :environment {},
+                              :kind "import",
+                              :message "",
+                              :resourceChanges {:create 0
+                                                :delete 0
+                                                :same 0
+                                                :update 0}
+                              :result "succeeded",
+                              :startTime 1598622551,
+                              :version 0}]}}))
 
 (comment
   (type (int 3))
@@ -114,5 +128,5 @@
                   [?e :stack:name "moh"]
                   [?e :stack:org-name "mopedtobias"]
                   [?e :stack:project-name "foobar"]]
-             @database/connection)))
+                @database/connection)))
 
