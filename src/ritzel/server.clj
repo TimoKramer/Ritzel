@@ -3,6 +3,7 @@
             [ritzel.config :as config]
             [ritzel.middleware :as middleware]
             [ritzel.database :as database]
+            [reitit.core :as reititcore]
             [reitit.ring :as ring]
             [reitit.coercion.spec]
             [reitit.spec :as spec]
@@ -59,7 +60,7 @@
 (s/def ::stack (s/keys :req-un [::stackName ::projectName ::orgName]
                        :opt-un [::tags ::version ::activeUpdate]))
 (s/def ::stacks (s/coll-of ::stack))
-(s/def ::deployment map?)
+(s/def ::deployment map?) ;; https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/core.go#L108
 (s/def ::untyped-deployment (s/keys :req-un [::deployment ::version]))
 (s/def ::import-response (s/keys :req-un [::updateID]))
 (s/def ::encrypt-decrypt (s/keys :req-un [::ciphertext]))
@@ -95,6 +96,7 @@
                                                  ::metadata]))
 (s/def ::start-update-response (s/keys :req-un [::version
                                                 ::update-token]))
+(s/def ::complete-update-request (s/keys :req-un [::result]))
 
 (def routes
   ["/api"
@@ -105,21 +107,21 @@
            :handler (swagger/create-swagger-handler)}}]
    ["/user"
     [""
-     {:swagger {:tags ["user" "API"]}
+     {:swagger {:tags ["user"]}
       :get     {:summary "Get current user."
                 :parameters {:header ::authorization-header}
                 :responses {200 {:body {:githubLogin string?}}}
                 :middleware [middleware/token-auth middleware/auth]
                 :handler handlers/get-current-user}}]
     ["/stacks"
-     {:swagger {:tags ["user" "API"]}
+     {:swagger {:tags ["user"]}
       :get     {:summary "List user stacks."
                 :parameters {:header ::authorization-header}
                 :responses {200 {:body {:stacks ::stacks}}}
                 :middleware [middleware/token-auth middleware/auth]
                 :handler handlers/list-user-stacks}}]]
    ["/cli/version"
-    {:swagger {:tags ["cli" "API"]}
+    {:swagger {:tags ["cli"]}
      :get     {:summary "Get information about versions of the CLI."
                :responses {200 {:body {:latestVersion string?
                                        :oldestWithoutWarning string?}}}
@@ -127,7 +129,7 @@
    ["/stacks"
    ;;TODO List Organization stacks seems not implemented
     ["/:org-name/:project-name"
-     {:swagger {:tags ["stacks" "API"]}
+     {:swagger {:tags ["stacks"]}
       :post    {:summary "Create stack."
                 :parameters {:header ::authorization-header
                              :body ::create-stack-body}
@@ -135,7 +137,7 @@
                 :middleware [middleware/token-auth middleware/auth]
                 :handler handlers/create-stack}}
      ["/:stack-name"
-      {:swagger {:tags ["stacks" "API"]}
+      {:swagger {:tags ["stacks"]}
        :get    {:summery "Get stack."
                 :parameters {:header ::authorization-header}
                 :responses {200 {:body ::stack}}
@@ -147,14 +149,14 @@
                 :middleware [middleware/token-auth middleware/auth]
                 :handler handlers/delete-stack}}
       ["/export"
-       {:swagger {:tags ["stacks" "API"]}
+       {:swagger {:tags ["stacks"]}
         :get {:summary "Export stack."
               :parameters {:header ::authorization-header}
               :responses {200 {:body ::untyped-deployment}}
               :middleware [middleware/token-auth middleware/auth]
               :handler handlers/export-stack}}]
       ["/import"
-       {:swagger {:tags ["stacks" "API"]}
+       {:swagger {:tags ["stacks"]}
         :post    {:summary "Import stack."
                   :parameters {:header ::authorization-header
                                :body ::untyped-deployment}
@@ -194,7 +196,7 @@
                     :middleware [middleware/token-auth middleware/auth]
                     :handler handlers/decrypt-value}}]
       ["/updates"
-       {:swagger {:tags ["stacks" "API"]}
+       {:swagger {:tags ["update"]}
         :get     {:summary "Get stack updates."
                   :parameters {:header ::authorization-header}
                   :responses {200 {:body ::updates}}
@@ -202,7 +204,8 @@
                   :handler handlers/get-stack-updates}}
        ["/:version"
         ;; TODO implement mocked handler
-        {:swagger {:tags ["stacks" "API"]}
+        {:swagger {:tags ["update"]}
+         :conflicting true
          :get     {:summary "Get stack update."
                    :parameters {:header ::authorization-header}
                    :responses {200 {:body ::info-update}}
@@ -223,7 +226,7 @@
                      :middleware [middleware/token-auth middleware/auth]
                      :handler handlers/get-update-contents-file-path}}]]]]
       ["/destroy"
-       {:swagger {:tags ["stacks" "destroy" "API"]}
+       {:swagger {:tags ["update"]}
         :post {:summary "Destroy stack."
                :parameters {:header ::authorization-header
                             :body ::update-program-request}
@@ -231,7 +234,7 @@
                :middleware [middleware/token-auth middleware/auth]
                :handler handlers/update-stack}}]
       ["/preview"
-       {:swagger {:tags ["stacks" "preview" "API"]}
+       {:swagger {:tags ["update"]}
         :post {:summary "Preview stack."
                :parameters {:header ::authorization-header
                             :body ::update-program-request}
@@ -239,7 +242,7 @@
                :middleware [middleware/token-auth middleware/auth]
                :handler handlers/update-stack}}]
       ["/update"
-       {:swagger {:tags ["stacks" "update" "API"]}
+       {:swagger {:tags ["update"]}
         :post {:summary "Update stack."
                :parameters {:header ::authorization-header
                             :body ::update-program-request}
@@ -247,16 +250,17 @@
                :middleware [middleware/token-auth middleware/auth]
                :handler handlers/update-stack}}]
       ["/refresh"
-       {:swagger {:tags ["stacks" "refresh" "API"]}
+       {:swagger {:tags ["update"]}
         :post {:summary "Refresh stack."
                :parameters {:header ::authorization-header
                             :body ::update-program-request}
                :responses {200 {:body ::updateID}}
                :middleware [middleware/token-auth middleware/auth]
                :handler handlers/update-stack}}]
-      ;; TODO implement mocked handler
+      ;; TODO implement mocked handler and solve route conflict with "/updates/:version"
       ["/:update-kind/:update-id"
-       {:swagger {:tags ["stacks" "update" "API"]}
+       {:swagger {:tags ["update"]}
+        :conflicting true
         :get {:summary "Get update status."
               :parameters {:header ::authorization-header}
               :responses {200 {:body map?}}
@@ -267,10 +271,32 @@
                             :body ::tags}
                :responses {200 {:body ::start-update-response}}
                :middleware [middleware/token-auth middleware/auth]
-               :handler handlers/get-update-status}}
+               :handler handlers/start-update}}
        ;; TODO implement mocked handler
-       ["/checkpoint"]
-       ["/complete"]
+       ["/checkpoint"
+        {:swagger {:tags ["update"]}
+         :patch {:summary "Patch checkpoint."
+                 :parameters {:header ::authorization-header
+                              :body ::untyped-deployment}
+                 :responses {204 {}}}
+         :middleware [middleware/update-token-auth middleware/auth]
+         :handler handlers/patch-checkpoint}]
+       ["/complete"
+        {:swagger {:tags ["update"]}
+         :post {:summary "Complete update."
+                :parameters {:header ::authorization-header
+                             :body ::complete-update-request}
+                :responses {204 {}}}
+         :middleware [middleware/update-token-auth middleware/auth]
+         :handler handlers/complete-update}]
+       ["/cancel"
+        {:swagger {:tags ["update"]}
+         :post {:summary "Cancel update."
+                :parameters {:header ::authorization-header
+                             :body ::complete-update-request}
+                :responses {204 {}}}
+         :middleware [middleware/update-token-auth middleware/auth]
+         :handler handlers/cancel-update}]
        ["/events"] ;; TODO seems not in use
        ["/events/batch"]
        ["/renew_lease"]]]]]])
@@ -278,22 +304,6 @@
 (defn wrap-db-connection [handler]
   (fn [request]
     (handler (assoc request :db-connection database/connection))))
-
-(comment
-  (val (first database/connection))
-  (s/explain seq? {:foo "bar"})
-  (println (s/valid? ::updates {:updates [{:config {},
-                                           :endTime 1598622551,
-                                           :environment {},
-                                           :kind "import",
-                                           :message "",
-                                           :resourceChanges {:create 0
-                                                             :delete 0
-                                                             :same 0
-                                                             :update 0}
-                                           :result "succeeded",
-                                           :startTime 1598622551,
-                                           :version 0}]})))
 
 (def muuntaja-instance
   (m/create
@@ -340,3 +350,9 @@
            (log/debug "Starting server")
            (start-server config/config))
   :stop (.stop server))
+
+
+(comment
+  (def router (ring/router routes route-opts))
+  (clojure.pprint/pprint (reititcore/match-by-path router "/api/stacks/orgName/projectName/stackName/foo/bar"))
+  (clojure.pprint/pprint (reititcore/match-by-path router "/api/stacks/orgName/projectName/stackName/updates/latest")))

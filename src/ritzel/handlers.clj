@@ -109,6 +109,24 @@
                           db-connection :db-connection}]
   (success {:status "succeeded"}))
 
+(defn start-update [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
+                     db-connection :db-connection}]
+  ;; https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/updates.go#L91
+  (success {:version 1 :token "foobar42"}))
+
+;; TODO store checkpoint in datahike, probably deployment as stringified json because cumbersome to spec
+(defn patch-checkpoint [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
+                         db-connection :db-connection}]
+  {:status 204})
+
+(defn complete-update [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
+                        db-connection :db-connection}]
+  {:status 204})
+
+(defn cancel-update [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
+                      db-connection :db-connection}]
+  {:status 200})
+
 (comment
   (type (int 3))
   database/connection
