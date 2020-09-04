@@ -53,6 +53,8 @@
 (s/def ::description string?)
 (s/def ::metadata map?)
 (s/def ::update-token string?)
+(s/def ::token string?)
+(s/def ::duration int?)
 
 (s/def ::tags (s/map-of string? string?))
 (s/def ::create-stack-body (s/keys :req-un [::stackName]
@@ -97,6 +99,10 @@
 (s/def ::start-update-response (s/keys :req-un [::version
                                                 ::update-token]))
 (s/def ::complete-update-request (s/keys :req-un [::result]))
+;;https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/events.go#L213
+(s/def ::post-engine-event-batch-request map?)
+(s/def ::renew-lease-request (s/keys :req-un [::token
+                                              ::duration]))
 
 (def routes
   ["/api"
@@ -212,19 +218,19 @@
                    :middleware [middleware/token-auth middleware/auth]
                    :handler handlers/get-stack-update}}
         #_["/contents" ; TODO seems not implemented
-         ["/files"
-          {:swagger {:tags ["stacks" "API"]}
-           :get     {:summary "Get update contents files."
-                     :parameters {:header ::authorization-header}
-                     :responses {200 {:body ::latest-update}}
-                     :middleware [middleware/token-auth middleware/auth]
-                     :handler handlers/get-update-contents-files}}]
-         ["/file/*path"
-          {:swagger {:tags ["stacks" "API"]}
-           :get     {:summary "Get update contents file path."
-                     :parameters {:header ::authorization-header}
-                     :middleware [middleware/token-auth middleware/auth]
-                     :handler handlers/get-update-contents-file-path}}]]]]
+           ["/files"
+            {:swagger {:tags ["stacks" "API"]}
+             :get     {:summary "Get update contents files."
+                       :parameters {:header ::authorization-header}
+                       :responses {200 {:body ::latest-update}}
+                       :middleware [middleware/token-auth middleware/auth]
+                       :handler handlers/get-update-contents-files}}]
+           ["/file/*path"
+            {:swagger {:tags ["stacks" "API"]}
+             :get     {:summary "Get update contents file path."
+                       :parameters {:header ::authorization-header}
+                       :middleware [middleware/token-auth middleware/auth]
+                       :handler handlers/get-update-contents-file-path}}]]]]
       ["/destroy"
        {:swagger {:tags ["update"]}
         :post {:summary "Destroy stack."
@@ -298,8 +304,22 @@
          :middleware [middleware/update-token-auth middleware/auth]
          :handler handlers/cancel-update}]
        ["/events"] ;; TODO seems not in use
-       ["/events/batch"]
-       ["/renew_lease"]]]]]])
+       ["/events/batch"
+        {:swagger {:tags ["update"]}
+         :post {:summary "Post engine event batch."
+                :parameters {:header ::authorization-header
+                             :body ::post-engine-event-batch-request}
+                :responses {200 {}}}
+         :middleware [middleware/update-token-auth middleware/auth]
+         :handler handlers/post-engine-event-batch}]
+       ["/renew_lease"
+        {:swagger {:tags ["update"]}
+         :post {:summary "Renew lease."
+                :parameters {:header ::authorization-header
+                             :body ::renew-lease-request}
+                :responses {200 {}}}
+         :middleware [middleware/update-token-auth middleware/auth]
+         :handler handlers/renew-lease-token}]]]]]])
 
 (defn wrap-db-connection [handler]
   (fn [request]
@@ -350,7 +370,6 @@
            (log/debug "Starting server")
            (start-server config/config))
   :stop (.stop server))
-
 
 (comment
   (def router (ring/router routes route-opts))

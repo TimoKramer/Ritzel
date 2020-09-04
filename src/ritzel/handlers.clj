@@ -82,7 +82,8 @@
 
 ;; TODO version can be latest or int
 ;; returns https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/history.go#L84
-(defn get-stack-update [{{:keys [org-name project-name stack-name version]} :path-params db-connection :db-connection}]
+(defn get-stack-update [{{:keys [org-name project-name stack-name version]}
+                         :path-params db-connection :db-connection}]
 ;TODO 404 on empty TODO get version number from DB TODO when version=latest get latest update
   (success {:info {:updates [{:config {},
                               :endTime 1598622551,
@@ -115,6 +116,7 @@
   (success {:version 1 :token "foobar42"}))
 
 ;; TODO store checkpoint in datahike, probably deployment as stringified json because cumbersome to spec
+;; see doc/patchCheckpoint.json
 (defn patch-checkpoint [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
                          db-connection :db-connection}]
   {:status 204})
@@ -125,7 +127,19 @@
 
 (defn cancel-update [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
                       db-connection :db-connection}]
-  {:status 200})
+  (success))
+
+;; TODO store event-batch as stringified json for now? or maybe just not store it for MVP?
+;; see doc/postEngineEventBatch.json
+(defn post-engine-event-batch [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
+                                db-connection :db-connection}]
+  (success))
+
+(defn renew-lease-token [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
+                          {:keys [token duration]} :body
+                          db-connection :db-connection}]
+  ;; TODO create new token, store it in update-token-db, delete old token, return new token
+  (success {:token :supergoodnewtoken4242}))
 
 (comment
   (type (int 3))
