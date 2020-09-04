@@ -1,0 +1,31 @@
+{
+  "name": "azure-py-containerinstance",
+  "runtime": "python",
+  "main": "",
+  "description": "An example of deploying an Azure Resource Manager (ARM) template using Pulumi.",
+  "options": {
+    "localPolicyPackPaths": [],
+    "color": "raw",
+    "dryRun": true,
+    "parallel": 2147483647,
+    "showConfig": false,
+    "showReplacementSteps": false,
+    "showNames": false,
+    "summary": false,
+    "debug": false
+  },
+  "config": {},
+  "metadata": {
+    "message": "Add containerinstance deployment for Datahike",
+    "environment": {
+      "exec.kind": "cli",
+      "git.author": "Timo Kramer",
+      "git.author.email": "fw-git@timokramer.de",
+      "git.committer": "Timo Kramer",
+      "git.committer.email": "fw-git@timokramer.de",
+      "git.dirty": "false",
+      "git.head": "a2fd286f7a9b6c8289342dba0d8979cc3b63e9ea",
+      "git.headName": "refs/heads/development"
+    }
+  }
+}

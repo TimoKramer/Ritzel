@@ -1,0 +1,7 @@
+{
+  "tags": {
+    "pulumi:description": "An example of deploying an Azure Resource Manager (ARM) template using Pulumi.",
+    "pulumi:project": "azure-py-containerinstance",
+    "pulumi:runtime": "python"
+  }
+}

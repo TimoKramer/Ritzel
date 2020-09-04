@@ -1,0 +1,136 @@
+{
+  "events": [
+    {
+      "sequence": 5,
+      "timestamp": 1599138743,
+      "resOutputsEvent": {
+        "metadata": {
+          "op": "create",
+          "urn": "urn:pulumi:testing::azure-py-containerinstance::azure:containerservice/group:Group::datahike-group",
+          "type": "azure:containerservice/group:Group",
+          "old": null,
+          "new": {
+            "type": "azure:containerservice/group:Group",
+            "urn": "urn:pulumi:testing::azure-py-containerinstance::azure:containerservice/group:Group::datahike-group",
+            "custom": true,
+            "id": "/subscriptions/<subscriptionID>/resourceGroups/datahike-rg7d8c9857/providers/Microsoft.ContainerInstance/containerGroups/datahike-groupc47fa541",
+            "parent": "urn:pulumi:testing::azure-py-containerinstance::pulumi:pulumi:Stack::azure-py-containerinstance-testing",
+            "inputs": {
+              "__defaults": [
+                "name",
+                "restartPolicy"
+              ],
+              "containers": [
+                {
+                  "__defaults": [],
+                  "cpu": 0.5,
+                  "image": "mopedtobias/datahike-server:latest",
+                  "memory": 1.5,
+                  "name": "datahike",
+                  "ports": [
+                    {
+                      "__defaults": [],
+                      "port": 3000,
+                      "protocol": "TCP"
+                    }
+                  ]
+                }
+              ],
+              "dnsNameLabel": "datahike-label",
+              "ipAddressType": "public",
+              "location": "westeurope",
+              "name": "datahike-groupc47fa541",
+              "osType": "Linux",
+              "resourceGroupName": "datahike-rg7d8c9857",
+              "restartPolicy": "Always",
+              "tags": {
+                "__defaults": [],
+                "environment": "testing"
+              }
+            },
+            "outputs": {
+              "__meta": "{\"e2bfb730-ecaa-11e6-8f88-34363bc7c4c0\":{\"create\":1800000000000,\"delete\":1800000000000,\"read\":300000000000,\"update\":1800000000000}}",
+              "containers": [
+                {
+                  "commands": [],
+                  "cpu": 0.5,
+                  "environmentVariables": {},
+                  "gpu": null,
+                  "image": "mopedtobias/datahike-server:latest",
+                  "livenessProbe": null,
+                  "memory": 1.5,
+                  "name": "datahike",
+                  "ports": [
+                    {
+                      "port": 3000,
+                      "protocol": "TCP"
+                    }
+                  ],
+                  "readinessProbe": null,
+                  "secureEnvironmentVariables": {},
+                  "volumes": []
+                }
+              ],
+              "diagnostics": null,
+              "dnsNameLabel": "datahike-label",
+              "fqdn": "datahike-label.westeurope.azurecontainer.io",
+              "id": "/subscriptions/<subscriptionID>/resourceGroups/datahike-rg7d8c9857/providers/Microsoft.ContainerInstance/containerGroups/datahike-groupc47fa541",
+              "identity": null,
+              "imageRegistryCredentials": [],
+              "ipAddress": "20.56.194.225",
+              "ipAddressType": "Public",
+              "location": "westeurope",
+              "name": "datahike-groupc47fa541",
+              "osType": "Linux",
+              "resourceGroupName": "datahike-rg7d8c9857",
+              "restartPolicy": "Always",
+              "tags": {
+                "environment": "testing"
+              }
+            },
+            "provider": ""
+          },
+          "logical": true,
+          "provider": "urn:pulumi:testing::azure-py-containerinstance::pulumi:providers:azure::default_3_19_0::2660e1f4-a74d-4bd5-bde5-d2b617238c49"
+        }
+      }
+    },
+    {
+      "sequence": 6,
+      "timestamp": 1599138743,
+      "resOutputsEvent": {
+        "metadata": {
+          "op": "create",
+          "urn": "urn:pulumi:testing::azure-py-containerinstance::pulumi:pulumi:Stack::azure-py-containerinstance-testing",
+          "type": "pulumi:pulumi:Stack",
+          "old": null,
+          "new": {
+            "type": "pulumi:pulumi:Stack",
+            "urn": "urn:pulumi:testing::azure-py-containerinstance::pulumi:pulumi:Stack::azure-py-containerinstance-testing",
+            "id": "",
+            "parent": "",
+            "inputs": {},
+            "outputs": {
+              "datahike_ip": "20.56.194.225"
+            },
+            "provider": ""
+          },
+          "logical": true,
+          "provider": ""
+        }
+      }
+    },
+    {
+      "sequence": 7,
+      "timestamp": 1599138743,
+      "summaryEvent": {
+        "maybeCorrupt": false,
+        "durationSeconds": 139,
+        "resourceChanges": {
+          "create": 3
+        },
+        "PolicyPacks": {}
+      }
+    }
+  ]
+}

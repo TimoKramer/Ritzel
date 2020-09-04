@@ -5,6 +5,7 @@
             [ritzel.database :as database]
             [reitit.ring :as ring]
             [reitit.coercion.spec]
+            [reitit.spec :as spec]
             [reitit.swagger :as swagger]
             [reitit.swagger-ui :as swagger-ui]
             [reitit.ring.coercion :as coercion]
@@ -28,9 +29,9 @@
 (s/def ::orgName string?)
 (s/def ::version int?)
 (s/def ::activeUpdate string?)
-(s/def ::updateId string?)
+(s/def ::updateID string?)
 (s/def ::ciphertext string?)
-(s/def ::config map?)
+(s/def ::config map?) ;; TODO string,secret,object https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/core.go#L324
 (s/def ::endTime int?)
 (s/def ::environment map?)
 (s/def ::kind #{"import" "destroy" "rename" "refresh" "preview" "update"}) ;;https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/history.go#L25-L38)
@@ -38,6 +39,20 @@
 (s/def ::resourceChanges (s/map-of #{:create :delete :same :update} (s/and int? #(>= % 0)))) ;;https://github.com/pulumi/pulumi/blob/master/pkg/engine/update.go#L143)
 (s/def ::result #{"in-progress" "succeeded" "failed"}) ;;https://github.com/pulumi/pulumi/blob/master/pkg/backend/updates.go#L35-L42)
 (s/def ::startTime int?)
+(s/def ::localPolicyPackPaths vector?)
+(s/def ::color #{"raw"})
+(s/def ::dryRun boolean?)
+(s/def ::parallel int?)
+(s/def ::showConfig boolean?)
+(s/def ::showReplacementSteps boolean?)
+(s/def ::showNames boolean?) ; showSames == showNames ??
+(s/def ::name ::projectName)
+(s/def ::runtime #{:python :go :dotnet :nodejs})
+(s/def ::main string?)
+(s/def ::description string?)
+(s/def ::metadata map?)
+(s/def ::update-token string?)
+
 (s/def ::tags (s/map-of string? string?))
 (s/def ::create-stack-body (s/keys :req-un [::stackName]
                                    :opt-un [::tags]))
@@ -46,12 +61,40 @@
 (s/def ::stacks (s/coll-of ::stack))
 (s/def ::deployment map?)
 (s/def ::untyped-deployment (s/keys :req-un [::deployment ::version]))
-(s/def ::import-response (s/keys :req-un [::updateId]))
+(s/def ::import-response (s/keys :req-un [::updateID]))
 (s/def ::encrypt-decrypt (s/keys :req-un [::ciphertext]))
-(s/def ::update (s/keys :req-un [::config ::endTime ::environment ::kind ::message ::resourceChanges ::result ::startTime ::version])) ;https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/history.go#L84
+;https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/history.go#L84
+(s/def ::update (s/keys :req-un [::config
+                                 ::endTime
+                                 ::environment
+                                 ::kind
+                                 ::message
+                                 ::resourceChanges
+                                 ::result
+                                 ::startTime
+                                 ::version]))
 (s/def ::updates (s/or :nil nil? :update (s/map-of #{:updates} (s/coll-of ::update))))
 (s/def ::info ::update)
 (s/def ::info-update (s/keys :req-un [::info]))
+;https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/updates.go#L49
+(s/def ::options (s/keys :req-un [::localPolicyPackPaths
+                                  ::color
+                                  ::dryRun
+                                  ::parallel
+                                  ::showConfig
+                                  ::showReplacementSteps
+                                  ::showNames]))
+;;https://github.com/pulumi/pulumi/blob/master/pkg/backend/httpstate/client/client.go#L448
+;;https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/updates.go#L30
+(s/def ::update-program-request (s/keys :req-un [::name
+                                                 ::runtime
+                                                 ::main
+                                                 ::description
+                                                 ::config
+                                                 ::options
+                                                 ::metadata]))
+(s/def ::start-update-response (s/keys :req-un [::version
+                                                ::update-token]))
 
 (def routes
   ["/api"
@@ -141,6 +184,15 @@
           :get     {:summary "Get stack logs."
                     :middleware [middleware/token-auth middleware/auth]
                     :handler handlers/get-stack-logs}}]
+      ; TODO Undocumentet in api_endpoints
+      #_["/rename"
+         {:swagger {:tags ["stacks" "API"]}
+          :post    {:summary "Decrypt value."
+                    :parameters {:header ::authorization-header
+                                 :body ::encrypt-decrypt}
+                    :responses {200 {:body string?}}
+                    :middleware [middleware/token-auth middleware/auth]
+                    :handler handlers/decrypt-value}}]
       ["/updates"
        {:swagger {:tags ["stacks" "API"]}
         :get     {:summary "Get stack updates."
@@ -148,14 +200,15 @@
                   :responses {200 {:body ::updates}}
                   :middleware [middleware/token-auth middleware/auth]
                   :handler handlers/get-stack-updates}}
-       ["/:version" ;https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/history.go#L84
+       ["/:version"
+        ;; TODO implement mocked handler
         {:swagger {:tags ["stacks" "API"]}
          :get     {:summary "Get stack update."
                    :parameters {:header ::authorization-header}
                    :responses {200 {:body ::info-update}}
                    :middleware [middleware/token-auth middleware/auth]
                    :handler handlers/get-stack-update}}
-        #_["/contents"
+        #_["/contents" ; TODO seems not implemented
          ["/files"
           {:swagger {:tags ["stacks" "API"]}
            :get     {:summary "Get update contents files."
@@ -168,7 +221,59 @@
            :get     {:summary "Get update contents file path."
                      :parameters {:header ::authorization-header}
                      :middleware [middleware/token-auth middleware/auth]
-                     :handler handlers/get-update-contents-file-path}}]]]]]]]])
+                     :handler handlers/get-update-contents-file-path}}]]]]
+      ["/destroy"
+       {:swagger {:tags ["stacks" "destroy" "API"]}
+        :post {:summary "Destroy stack."
+               :parameters {:header ::authorization-header
+                            :body ::update-program-request}
+               :responses {200 {:body ::updateID}}
+               :middleware [middleware/token-auth middleware/auth]
+               :handler handlers/update-stack}}]
+      ["/preview"
+       {:swagger {:tags ["stacks" "preview" "API"]}
+        :post {:summary "Preview stack."
+               :parameters {:header ::authorization-header
+                            :body ::update-program-request}
+               :responses {200 {:body ::updateID}}
+               :middleware [middleware/token-auth middleware/auth]
+               :handler handlers/update-stack}}]
+      ["/update"
+       {:swagger {:tags ["stacks" "update" "API"]}
+        :post {:summary "Update stack."
+               :parameters {:header ::authorization-header
+                            :body ::update-program-request}
+               :responses {200 {:body ::updateID}}
+               :middleware [middleware/token-auth middleware/auth]
+               :handler handlers/update-stack}}]
+      ["/refresh"
+       {:swagger {:tags ["stacks" "refresh" "API"]}
+        :post {:summary "Refresh stack."
+               :parameters {:header ::authorization-header
+                            :body ::update-program-request}
+               :responses {200 {:body ::updateID}}
+               :middleware [middleware/token-auth middleware/auth]
+               :handler handlers/update-stack}}]
+      ;; TODO implement mocked handler
+      ["/:update-kind/:update-id"
+       {:swagger {:tags ["stacks" "update" "API"]}
+        :get {:summary "Get update status."
+              :parameters {:header ::authorization-header}
+              :responses {200 {:body map?}}
+              :middleware [middleware/token-auth middleware/auth]
+              :handler handlers/get-update-status}
+        :post {:summary "Start update."
+               :parameters {:header ::authorization-header
+                            :body ::tags}
+               :responses {200 {:body ::start-update-response}}
+               :middleware [middleware/token-auth middleware/auth]
+               :handler handlers/get-update-status}}
+       ;; TODO implement mocked handler
+       ["/checkpoint"]
+       ["/complete"]
+       ["/events"] ;; TODO seems not in use
+       ["/events/batch"]
+       ["/renew_lease"]]]]]])
 
 (defn wrap-db-connection [handler]
   (fn [request]
@@ -190,13 +295,21 @@
                                            :startTime 1598622551,
                                            :version 0}]})))
 
+(def muuntaja-instance
+  (m/create
+   (-> m/default-options
+       (update
+        :formats
+        select-keys
+        ["application/json"]))))
+
 (def route-opts
-  {:reitit.middleware/transform dev/print-request-diffs ;; pretty diffs
-   ;; :validate spec/validate ;; enable spec validation for route data
+  {;:reitit.middleware/transform dev/print-request-diffs ;; pretty diffs
+   :validate spec/validate ;; enable spec validation for route data
    ;;:reitit.spec/wrap spell/closed ;; strict top-level validation
    :exception pretty/exception
    :data      {:coercion   reitit.coercion.spec/coercion
-               :muuntaja   m/instance
+               :muuntaja   muuntaja-instance
                :middleware [swagger/swagger-feature
                             parameters/parameters-middleware
                             muuntaja/format-negotiate-middleware

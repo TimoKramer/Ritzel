@@ -80,6 +80,8 @@
                        :startTime 1598622551,
                        :version 0}]}))
 
+;; TODO version can be latest or int
+;; returns https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/history.go#L84
 (defn get-stack-update [{{:keys [org-name project-name stack-name version]} :path-params db-connection :db-connection}]
 ;TODO 404 on empty TODO get version number from DB TODO when version=latest get latest update
   (success {:info {:updates [{:config {},
@@ -94,6 +96,18 @@
                               :result "succeeded",
                               :startTime 1598622551,
                               :version 0}]}}))
+
+;; TODO create update of kind update, preview, refresh, rename, destroy or import
+;; https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/history.go#L23
+(defn update-stack [{{:keys [org-name project-name stack-name update-kind]} :path-params
+                     db-connection :db-connection}]
+  (success {:updateID "f5c927c1-fb83-4e27-89f7-0d4f6fe16eec"}))
+
+;; TODO check if update either succeeded, failed, running, requested or not started
+;; https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/updates.go#L118
+(defn get-update-status [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
+                          db-connection :db-connection}]
+  (success {:status "succeeded"}))
 
 (comment
   (type (int 3))
