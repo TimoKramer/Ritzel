@@ -117,6 +117,7 @@
 
 ;; TODO store checkpoint in datahike, probably deployment as stringified json because cumbersome to spec
 ;; see doc/patchCheckpoint.json
+;; invalidate checkpoint when payload empty
 (defn patch-checkpoint [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
                          db-connection :db-connection}]
   {:status 204})
