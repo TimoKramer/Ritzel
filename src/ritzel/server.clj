@@ -106,12 +106,12 @@
 
 (def routes
   ["/api"
-   ["/swagger.json"
+   #_["/swagger.json"
     {:get {:no-doc  true
            :swagger {:info {:title       "Ritzel API"
                             :description "Pulumi HTTP Backend"}}
            :handler (swagger/create-swagger-handler)}}]
-   ["/user"
+   #_["/user"
     [""
      {:swagger {:tags ["user"]}
       :get     {:summary "Get current user."
@@ -126,7 +126,7 @@
                 :responses {200 {:body {:stacks ::stacks}}}
                 :middleware [middleware/token-auth middleware/auth]
                 :handler handlers/list-user-stacks}}]]
-   ["/cli/version"
+   #_["/cli/version"
     {:swagger {:tags ["cli"]}
      :get     {:summary "Get information about versions of the CLI."
                :responses {200 {:body {:latestVersion string?
@@ -137,12 +137,15 @@
     ["/:org-name/:project-name"
      {:swagger {:tags ["stacks"]}
       :post    {:summary "Create stack."
-                :parameters {:header ::authorization-header
-                             :body ::create-stack-body}
-                :responses {200 {:body map?}}
+                :parameters {:header ::authorization-header}
+                             ;;:body ::create-stack-body}
+                ;;:responses {200 {:body map?}}
                 :middleware [middleware/token-auth middleware/auth]
-                :handler handlers/create-stack}}
-     ["/:stack-name"
+                :handler handlers/create-stack}
+      :head {:summary "Check if project exists."
+             :responses {200 {}}
+             :handler handlers/project-exists?}}
+     #_["/:stack-name"
       {:swagger {:tags ["stacks"]}
        :get    {:summery "Get stack."
                 :parameters {:header ::authorization-header}
@@ -201,6 +204,14 @@
                     :responses {200 {:body string?}}
                     :middleware [middleware/token-auth middleware/auth]
                     :handler handlers/decrypt-value}}]
+      ["/tags"
+       {:swagger {:tags ["update"]}
+        :patch {:summary "Update stack tags, replace all existing tags."
+                :parameters {:header ::authorization-header
+                             :body ::tags}
+                :responses {204 {}}
+                :middleware [middleware/token-auth middleware/auth]
+                :handler handlers/update-tags}}]
       ["/updates"
        {:swagger {:tags ["update"]}
         :get     {:summary "Get stack updates."
@@ -271,7 +282,7 @@
               :parameters {:header ::authorization-header}
               :responses {200 {:body map?}}
               :middleware [middleware/token-auth middleware/auth]
-              :handler handlers/get-update-status}
+              :handler handlers/get-update-events}
         :post {:summary "Start update."
                :parameters {:header ::authorization-header
                             :body ::tags}
@@ -334,13 +345,13 @@
         ["application/json"]))))
 
 (def route-opts
-  {;:reitit.middleware/transform dev/print-request-diffs ;; pretty diffs
-   :validate spec/validate ;; enable spec validation for route data
+  {:reitit.middleware/transform dev/print-request-diffs ;; pretty diffs
+   ;;:validate spec/validate ;; enable spec validation for route data
    ;;:reitit.spec/wrap spell/closed ;; strict top-level validation
    :exception pretty/exception
    :data      {:coercion   reitit.coercion.spec/coercion
                :muuntaja   muuntaja-instance
-               :middleware [swagger/swagger-feature
+               :middleware [;;swagger/swagger-feature
                             parameters/parameters-middleware
                             muuntaja/format-negotiate-middleware
                             muuntaja/format-response-middleware
@@ -354,7 +365,7 @@
   (-> (ring/ring-handler
        (ring/router routes route-opts)
        (ring/routes
-        (swagger-ui/create-swagger-ui-handler
+        #_(swagger-ui/create-swagger-ui-handler
          {:path   "/"
           :url    "/api/swagger.json"
           :config {:validatorUrl     nil
@@ -373,5 +384,5 @@
 
 (comment
   (def router (ring/router routes route-opts))
-  (clojure.pprint/pprint (reititcore/match-by-path router "/api/stacks/orgName/projectName/stackName/foo/bar"))
+  (clojure.pprint/pprint (reititcore/match-by-path router "/api/stacks/orgName/projectName"))
   (clojure.pprint/pprint (reititcore/match-by-path router "/api/stacks/orgName/projectName/stackName/updates/latest")))

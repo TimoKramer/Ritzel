@@ -30,11 +30,24 @@
   (let [stack-name    (:stackName body-params)
         org-name     (:org-name path-params)
         project-name (:project-name path-params)
-        _ (log/info stack-name org-name project-name)
-        _ (d/transact db-connection [{:stack:name stack-name
-                                      :stack:org-name org-name
-                                      :stack:project-name project-name}])]
+        tags         (:tags body-params)
+        _ (log/debug "Creating stack: " stack-name " " org-name " " project-name " " tags)
+        _ (d/transact db-connection [{:stack/name stack-name
+                                      :stack/org-name org-name
+                                      :stack/project-name project-name
+                                      :stack/tags tags}])]
     (success {})))
+
+(comment
+  (create-stack {:db-connection database/connection
+                 :body-params {:stackName "meyer"
+                               :tags [{"mathe" "unterricht"}]}
+                 :path-params {:org-name "gerhard"
+                               :project-name "abitur"}}))
+
+(defn project-exists? [{:keys [db-connection body-params path-params]}]
+  ;; TODO query for project
+  (success))
 
 (defn get-stack [{{:keys [org-name project-name stack-name]} :path-params db-connection :db-connection}]
   ;; TODO query
@@ -65,6 +78,10 @@
 
 (defn import-stack [request]
   (success {:updateId "24f1a28a-0549-4848-b35d-f986d05c6b1b"}))
+
+(defn update-tags [request]
+  ;; TODO update tags in db
+  {:status 204})
 
 (defn get-stack-updates [request] ;TODO can be empty as well
   (success {:updates [{:config {},
@@ -109,6 +126,13 @@
 (defn get-update-status [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
                           db-connection :db-connection}]
   (success {:status "succeeded"}))
+
+;; TODO implement handler
+;; query-param "?continuationToken=%s"
+;; retrieve update results
+(defn get-update-events [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
+                          db-connection :db-connection}]
+  (success))
 
 (defn start-update [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
                      db-connection :db-connection}]

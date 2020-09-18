@@ -1,0 +1,8 @@
+{
+  "stackName": "sldfk",
+  "tags": {
+    "pulumi:description": "A minimal Azure Python Pulumi program",
+    "pulumi:project": "azure-py-aks",
+    "pulumi:runtime": "python"
+  }
+}
