@@ -1,0 +1,13 @@
+{
+  "orgName": "mopedtobias",
+  "projectName": "azure-py-datahike",
+  "stackName": "dev",
+  "activeUpdate": "24f1a28a-0549-4848-b35d-f986d05c6b1b",
+  "tags": {
+    "gitHub:owner": "mopedtobias",
+    "pulumi:description": "Kubernetes Datahike example based on https://kubernetes.io/docs/tutorials/stateless-application/guestbook/",
+    "pulumi:project": "azure-py-datahike",
+    "pulumi:runtime": "python"
+  },
+  "version": 1
+}

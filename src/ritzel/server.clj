@@ -111,7 +111,7 @@
            :swagger {:info {:title       "Ritzel API"
                             :description "Pulumi HTTP Backend"}}
            :handler (swagger/create-swagger-handler)}}]
-   #_["/user"
+   ["/user"
     [""
      {:swagger {:tags ["user"]}
       :get     {:summary "Get current user."
@@ -126,7 +126,7 @@
                 :responses {200 {:body {:stacks ::stacks}}}
                 :middleware [middleware/token-auth middleware/auth]
                 :handler handlers/list-user-stacks}}]]
-   #_["/cli/version"
+   ["/cli/version"
     {:swagger {:tags ["cli"]}
      :get     {:summary "Get information about versions of the CLI."
                :responses {200 {:body {:latestVersion string?
@@ -137,9 +137,9 @@
     ["/:org-name/:project-name"
      {:swagger {:tags ["stacks"]}
       :post    {:summary "Create stack."
-                :parameters {:header ::authorization-header}
-                             ;;:body ::create-stack-body}
-                ;;:responses {200 {:body map?}}
+                :parameters {:header ::authorization-header
+                             :body ::create-stack-body}
+                :responses {200 {:body map?}}
                 :middleware [middleware/token-auth middleware/auth]
                 :handler handlers/create-stack}
       :head {:summary "Check if project exists."

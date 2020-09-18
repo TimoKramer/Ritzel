@@ -31,11 +31,15 @@
         project-name (:project-name path-params)
         tags         (:tags body-params)
         _ (log/debug "Creating stack with stack-name: " stack-name " org-name: " org-name " project-name: " project-name " and tags: " tags)
-        result (d/transact db-connection [{:stack/name stack-name
-                                           :stack/org-name org-name
-                                           :stack/project-name project-name
-                                           :stack/tags tags}])]
-    (success)))
+        eid (-> (d/transact db-connection [{:stack/name stack-name
+                                          :stack/org-name org-name
+                                          :stack/project-name project-name
+                                          :stack/tags tags}])
+              (:tx-data)
+              (first)
+              (first))
+        response (d/pull @db-connection '[* {:stack/tags [*]}] eid)]
+    (success response)))
 
 (defn project-exists? [{:keys [db-connection body-params path-params]}]
   ;; TODO query for project
