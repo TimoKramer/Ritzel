@@ -32,8 +32,8 @@ Most of the API is already specced. I need to go over the client.go again to com
 
 ### MVP
 
-- Login
-- Stack Init
+- [x] Login
+- [x] Stack Init
 - Up
 - Destroy
 - Stack Remove
