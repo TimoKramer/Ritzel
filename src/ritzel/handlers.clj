@@ -26,24 +26,16 @@
   (success))
 
 (defn create-stack [{:keys [db-connection body-params path-params]}]
-  ;; TODO transact correctly
   (let [stack-name    (:stackName body-params)
         org-name     (:org-name path-params)
         project-name (:project-name path-params)
         tags         (:tags body-params)
-        _ (log/debug "Creating stack: " stack-name " " org-name " " project-name " " tags)
-        _ (d/transact db-connection [{:stack/name stack-name
-                                      :stack/org-name org-name
-                                      :stack/project-name project-name
-                                      :stack/tags tags}])]
-    (success {})))
-
-(comment
-  (create-stack {:db-connection database/connection
-                 :body-params {:stackName "meyer"
-                               :tags [{"mathe" "unterricht"}]}
-                 :path-params {:org-name "gerhard"
-                               :project-name "abitur"}}))
+        _ (log/debug "Creating stack with stack-name: " stack-name " org-name: " org-name " project-name: " project-name " and tags: " tags)
+        result (d/transact db-connection [{:stack/name stack-name
+                                           :stack/org-name org-name
+                                           :stack/project-name project-name
+                                           :stack/tags tags}])]
+    (success)))
 
 (defn project-exists? [{:keys [db-connection body-params path-params]}]
   ;; TODO query for project
