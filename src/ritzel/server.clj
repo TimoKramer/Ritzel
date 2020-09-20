@@ -143,7 +143,10 @@
                 :middleware [middleware/token-auth middleware/auth]
                 :handler handlers/create-stack}
       :head {:summary "Check if project exists."
-             :responses {200 {}}
+             :parameters {:header ::authorization-header}
+             :responses {200 {}
+                         404 {}}
+             :middleware [middleware/token-auth middleware/auth]
              :handler handlers/project-exists?}}
      #_["/:stack-name"
       {:swagger {:tags ["stacks"]}

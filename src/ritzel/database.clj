@@ -33,8 +33,6 @@
   (start #'ritzel.database/connection))
 
 (comment
-  (def connection (init-connections cfg))
-
   (defn transact-stack [connection name org-name project-name]
     (-> (d/transact connection
                     [{:stack/name name
@@ -67,9 +65,11 @@
                            :db/cardinality :db.cardinality/one}
                           {:db/ident :stack/org-name
                            :db/valueType :db.type/string
+                           :db/unique :db.unique/identity
                            :db/cardinality :db.cardinality/one}
                           {:db/ident :stack/project-name
                            :db/valueType :db.type/string
+                           :db/unique :db.unique/identity
                            :db/cardinality :db.cardinality/one}
                           {:db/ident :stack/tags
                            :db/valueType :db.type/ref
@@ -77,9 +77,11 @@
                            :db/doc "The tags attributed to a stack"}
                           {:db/ident :tag/name
                            :db/valueType :db.type/string
+                           :db/unique :db.unique/identity
                            :db/cardinality :db.cardinality/one}
                           {:db/ident :tag/value
                            :db/valueType :db.type/string
+                           :db/unique :db.unique/identity
                            :db/cardinality :db.cardinality/one}])
 
   (d/transact connection
@@ -107,7 +109,7 @@
   (d/transact connection
               [{:tag/name "meister:lampe"
                 :tag/value "gehtsnoch?"
-                :stack/_tags 1}])
+                :stack/_tags 6}])
 
   (d/transact connection
               [{:stack/name "mark"
@@ -116,20 +118,29 @@
                 :stack/tags {:tag/name "meister:lampe"
                              :tag/value "gehtsnoch?"}}])
 
-  (clojure.pprint/pprint (d/datoms @connection :eavt))
+  (d/datoms @connection :eavt)
 
   (clojure.pprint/pprint (d/q '[:find ?e ?a ?v
                                 :where [?e ?a ?v]]
                               @connection))
 
+  (d/q '[:find ?e
+         :where [?e :stack/project-name "meyer"]
+         [?e :stack/org-name "gerhard"]]
+       @connection)
+  (d/q '[:find ?e
+         :where [?e :stack/project-name "meyer"]
+         [?e :stack/org-name "gerhard"]]
+       @connection)
+
   (clojure.pprint/pprint (d/q '[:find [(pull ?e [*]) ...]
                                 :where [?e ?a ?v]]
                               @connection))
+  (:stack/tags (d/entity @connection 7))
+  (d/pull @connection '[*] 1)
 
-  (:stack:name (d/entity @connection 1))
-
-  (clojure.pprint/pprint (d/pull @connection '[* {:stack/tags [*]}] 5))
-
+  (clojure.pprint/pprint (d/pull @connection '[* {:stack/tags [*]}] 11))
+  (d/pull @connection '[*] 11)
   (cleanup-databases)
 
   (def create-stack [{:db/ident :stack/name

@@ -32,18 +32,26 @@
         tags         (:tags body-params)
         _ (log/debug "Creating stack with stack-name: " stack-name " org-name: " org-name " project-name: " project-name " and tags: " tags)
         eid (-> (d/transact db-connection [{:stack/name stack-name
-                                          :stack/org-name org-name
-                                          :stack/project-name project-name
-                                          :stack/tags tags}])
-              (:tx-data)
-              (first)
-              (first))
+                                            :stack/org-name org-name
+                                            :stack/project-name project-name
+                                            :stack/tags tags}])
+                (:tx-data)
+                (first)
+                (first))
         response (d/pull @db-connection '[* {:stack/tags [*]}] eid)]
     (success response)))
 
-(defn project-exists? [{:keys [db-connection body-params path-params]}]
-  ;; TODO query for project
-  (success))
+(defn project-exists? [{{:keys [org-name project-name]} :path-params db-connection :db-connection}]
+  (let [_ (log/debug "Querying for project with org: " org-name " project: " project-name)
+        query (d/q '[:find ?e
+                     :in $ ?org ?project
+                     :where [?e :stack/project-name ?project]
+                            [?e :stack/org-name ?org]]
+                   @database/connection org-name project-name)
+        _ (log/debug "Query result: " query)]
+    (if (empty? query)
+      {:status 404}
+      (success))))
 
 (defn get-stack [{{:keys [org-name project-name stack-name]} :path-params db-connection :db-connection}]
   ;; TODO query
