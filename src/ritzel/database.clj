@@ -82,7 +82,15 @@
                           {:db/ident :tag/value
                            :db/valueType :db.type/string
                            :db/unique :db.unique/identity
-                           :db/cardinality :db.cardinality/one}])
+                           :db/cardinality :db.cardinality/one}
+                          {:db/ident :update/uuid
+                           :db/valueType :db.type/uuid
+                           :db/unique :db.unique/identity
+                           :db/cardinality :db.cardinality/one}
+                          {:db/ident :update/value
+                           :db/valueType :db.type/ref
+                           :db/cardinality :db.cardinality/one
+                           :db/doc "The values of an update"}])
 
   (d/transact connection
               [{:db/ident :stack/tags
@@ -119,10 +127,17 @@
                              :tag/value "gehtsnoch?"}}])
 
   (d/datoms @connection :eavt)
+  (clojure.pprint/pprint (d/datoms @connection :eavt))
+  (clojure.pprint/pprint (clojure.pprint/pprint (d/datoms @connection :eavt)))
 
   (clojure.pprint/pprint (d/q '[:find ?e ?a ?v
                                 :where [?e ?a ?v]]
                               @connection))
+
+  (clojure.pprint/pprint (d/q '[:find ?e ?uuid
+                                :where [?e :update/uuid ?uuid]]
+                              @connection))
+  (d/pull @connection '[*] [:update/uuid "dcfb145e-3227-4c38-ae9b-04a18efee803"])
 
   (d/q '[:find ?e
          :where [?e :stack/project-name "meyer"]
@@ -136,10 +151,22 @@
   (clojure.pprint/pprint (d/q '[:find [(pull ?e [*]) ...]
                                 :where [?e ?a ?v]]
                               @connection))
+  (clojure.pprint/pprint (d/q '[:find [(pull ?e [*]) ...]
+                                :where [?e :update/uuid]]
+                              @connection))
   (:stack/tags (d/entity @connection 7))
-  (d/pull @connection '[*] 1)
-
-  (clojure.pprint/pprint (d/pull @connection '[* {:stack/tags [*]}] 11))
+  (d/pull @connection '[*] 9)
+  (d/pull @connection '[*] [:update/uuid #uuid "dcfb145e-3227-4c38-ae9b-04a18efee803"])
+  (d/q '[:find [(pull ?e [* {:update/value [*]}])]
+         :in $ ?uuid
+         :where [?e :update/uuid  ?uuid]]
+       @connection
+       #uuid "dcfb145e-3227-4c38-ae9b-04a18efee803")
+       
+                      
+  (d/pull @connection '[* {:stack/tags [*]}] 5)
+  (clojure.pprint/pprint (d/pull @connection '[* {:stack/tags [*]}] 4))
+  (clojure.pprint/pprint (d/pull @connection '[* {:update/value [*]}] 9))
   (d/pull @connection '[*] 11)
   (cleanup-databases)
 

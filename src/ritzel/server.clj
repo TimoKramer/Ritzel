@@ -30,7 +30,7 @@
 (s/def ::orgName string?)
 (s/def ::version int?)
 (s/def ::activeUpdate string?)
-(s/def ::updateID string?)
+(s/def ::updateID uuid?)
 (s/def ::ciphertext string?)
 (s/def ::config map?) ;; TODO string,secret,object https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/core.go#L324
 (s/def ::endTime int?)
@@ -52,7 +52,6 @@
 (s/def ::main string?)
 (s/def ::description string?)
 (s/def ::metadata map?)
-(s/def ::update-token string?)
 (s/def ::token string?)
 (s/def ::duration int?)
 
@@ -64,7 +63,7 @@
 (s/def ::stacks (s/coll-of ::stack))
 (s/def ::deployment map?) ;; https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/core.go#L108
 (s/def ::untyped-deployment (s/keys :req-un [::deployment ::version]))
-(s/def ::import-response (s/keys :req-un [::updateID]))
+(s/def ::stack-response (s/keys :req-un [::updateID]))
 (s/def ::encrypt-decrypt (s/keys :req-un [::ciphertext]))
 ;https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/history.go#L84
 (s/def ::update (s/keys :req-un [::config
@@ -87,7 +86,6 @@
                                   ::showConfig
                                   ::showReplacementSteps
                                   ::showNames]))
-(s/def ::createUpdateResponse (s/keys :req-un [::updateID]))
 ;;https://github.com/pulumi/pulumi/blob/master/pkg/backend/httpstate/client/client.go#L448
 ;;https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/updates.go#L30
 (s/def ::update-program-request (s/keys :req-un [::name
@@ -97,8 +95,9 @@
                                                  ::config
                                                  ::options
                                                  ::metadata]))
+(s/def ::start-update-request (s/keys :req-un [::tags]))
 (s/def ::start-update-response (s/keys :req-un [::version
-                                                ::update-token]))
+                                                ::token]))
 (s/def ::complete-update-request (s/keys :req-un [::result]))
 ;;https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/events.go#L213
 (s/def ::post-engine-event-batch-request map?)
@@ -175,7 +174,7 @@
         :post    {:summary "Import stack."
                   :parameters {:header ::authorization-header
                                :body ::untyped-deployment}
-                  :responses {200 {:body ::import-response}}
+                  :responses {200 {:body ::stack-response}}
                   :middleware [middleware/token-auth middleware/auth]
                   :handler handlers/import-stack}}]
       ["/tags"
@@ -254,25 +253,25 @@
          :post {:summary "Create update of type destroy"
                 :parameters {:header ::authorization-header
                              :body ::update-program-request}
-                :responses {200 {:body ::createUpdateResponse}}
+                :responses {200 {:body ::stack-response}}
                 :middleware [middleware/token-auth middleware/auth]
-                :handler handlers/update-stack}}]]
+                :handler handlers/destroy-stack}}]]
       ["/preview"
        [""
         {:swagger {:tags ["update"]}
          :post {:summary "Create update of type preview"
                 :parameters {:header ::authorization-header
                              :body ::update-program-request}
-                :responses {200 {:body ::createUpdateResponse}}
+                :responses {200 {:body ::stack-response}}
                 :middleware [middleware/token-auth middleware/auth]
-                :handler handlers/update-stack}}]]
+                :handler handlers/preview-stack}}]]
       ["/update"
        [""
         {:swagger {:tags ["update"]}
          :post {:summary "Create update of type update"
                 :parameters {:header ::authorization-header
                              :body ::update-program-request}
-                :responses {200 {:body ::createUpdateResponse}}
+                :responses {200 {:body ::stack-response}}
                 :middleware [middleware/token-auth middleware/auth]
                 :handler handlers/update-stack}}]
        ["/:update-kind/:update-id"

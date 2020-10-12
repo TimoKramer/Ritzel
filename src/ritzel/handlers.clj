@@ -47,7 +47,7 @@
                      :in $ ?org ?project
                      :where [?e :stack/project-name ?project]
                             [?e :stack/org-name ?org]]
-                   @database/connection org-name project-name)
+                   @db-connection org-name project-name)
         _ (log/debug "Query result: " query)]
     (if (empty? query)
       {:status 404}
@@ -121,58 +121,33 @@
 
 ;; TODO create update of kind update, preview, refresh, rename, destroy or import
 ;; https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/history.go#L23
-(defn update-stack [{{:keys [org-name project-name stack-name update-kind]} :path-params
-                     db-connection :db-connection}]
-  (success {:updateID "f5c927c1-fb83-4e27-89f7-0d4f6fe16eec"}))
+(defn -update-stack [{{:keys [org-name project-name stack-name] :as path-params} :path-params
+                      body-params :body-params
+                      db-connection :db-connection}
+                     update-kind]
+  (let [uuid (java.util.UUID/randomUUID)
+        _ (d/transact db-connection [{:stack/name stack-name
+                                      :stack/org-name org-name
+                                      :stack/project-name project-name
+                                      :update/uuid uuid
+                                      :update/kind update-kind
+                                      :update/value body-params}])]
+    (success {:updateID uuid})))
 
-;; TODO check if update either succeeded, failed, running, requested or not started
-;; https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/updates.go#L118
-(defn get-update-status [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
-                          db-connection :db-connection}]
-  (success {:status "succeeded"}))
+(defn update-stack [params]
+  (-update-stack params :update))
 
-;; TODO implement handler
-;; query-param "?continuationToken=%s"
-;; retrieve update results
-(defn get-update-events [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
-                          db-connection :db-connection}]
-  (success))
+(defn destroy-stack [params]
+  (-update-stack params :destroy))
 
-(defn start-update [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
-                     db-connection :db-connection}]
-  ;; https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/updates.go#L91
-  ;; increment version number
-  ;; set valid token for time of update
-  (success {:version 1 :token "eyJhbGciOiJIUzI1NiIsIm"}))
-
-;; TODO store checkpoint in datahike, probably deployment as stringified json because cumbersome to spec
-;; see doc/patchCheckpoint.json
-;; invalidate checkpoint when payload empty
-(defn patch-checkpoint [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
-                         db-connection :db-connection}]
-  {:status 204})
-
-(defn complete-update [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
-                        db-connection :db-connection}]
-  {:status 204})
-
-(defn cancel-update [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
-                      db-connection :db-connection}]
-  (success))
-
-;; TODO store event-batch as stringified json for now? or maybe just not store it for MVP?
-;; see doc/postEngineEventBatch.json
-(defn post-engine-event-batch [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
-                                db-connection :db-connection}]
-  (success))
-
-(defn renew-lease-token [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
-                          {:keys [token duration]} :body
-                          db-connection :db-connection}]
-  ;; TODO create new token, store it in update-token-db, delete old token, return new token
-  (success {:token :supergoodnewtoken4242}))
+(defn preview-stack [params]
+  (-update-stack params :preview))
 
 (comment
+  (update-stack {:path-params {:foo :bar} :body-params {:foo :bar} :db-connection :foo}) 
+  (uuid? (java.util.UUID/randomUUID))
+  (d/transact database/connection [{:update/uuid "f5c927c1-fb83-4e27-89f7-0d4f6fe16eec"
+                                    :update/body {:foo "bar"}}])
   (type (int 3))
   database/connection
   (def conn (get database/connection "pulumi-db"))
@@ -206,4 +181,59 @@
                   [?e :stack:org-name "mopedtobias"]
                   [?e :stack:project-name "foobar"]]
                 @database/connection)))
+;; TODO check if update either succeeded, failed, running, requested or not started
+;; https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/updates.go#L118
+(defn get-update-status [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
+                          db-connection :db-connection}]
+  (success {:status "succeeded"}))
+
+;; TODO implement handler
+;; query-param "?continuationToken=%s"
+;; retrieve update results
+(defn get-update-events [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
+                          db-connection :db-connection}]
+  (success))
+
+(defn start-update [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
+                     {:keys [tags]} :body-params
+                     db-connection :db-connection}]
+  (let [_ (d/transact db-connection [{:stack/name stack-name
+                                      :stack/org-name org-name
+                                      :stack/project-name project-name
+                                      :stack/tags tags
+                                      :update/uuid update-id
+                                      :update/kind update-kind}])])
+    ;; TODO how to update tags?
+    ;; TODO token format?
+    ;; TODO increment version
+  (success {:version 1 :token "eyJhbGciOiJIUzI1NiIsIm"}))
+
+;; TODO store checkpoint in datahike, probably deployment as stringified json because cumbersome to spec
+;; see doc/patchCheckpoint.json
+;; invalidate checkpoint when payload empty
+(defn patch-checkpoint [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
+                         db-connection :db-connection}]
+  {:status 204})
+
+(defn complete-update [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
+                        db-connection :db-connection}]
+  {:status 204})
+
+(defn cancel-update [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
+                      db-connection :db-connection}]
+  (success))
+
+;; TODO store event-batch as stringified json for now? or maybe just not store it for MVP?
+;; see doc/postEngineEventBatch.json
+(defn post-engine-event-batch [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
+                                db-connection :db-connection}]
+  (success))
+
+(defn renew-lease-token [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
+                          {:keys [token duration]} :body
+                          db-connection :db-connection}]
+  ;; TODO create new token, store it in update-token-db, delete old token, return new token
+  (success {:token :supergoodnewtoken4242}))
+
+
 

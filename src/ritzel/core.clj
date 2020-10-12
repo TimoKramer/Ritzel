@@ -20,6 +20,6 @@
 
 (comment
 
-  (mount/start)
+  (-main)
 
   (mount/stop))

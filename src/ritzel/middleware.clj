@@ -4,7 +4,7 @@
    [buddy.auth.backends :as buddy-auth-backends]
    [buddy.auth.middleware :as buddy-auth-middleware]))
 
-(def tokens {:2f904e245c1f5 :pulumi-user1})
+(def tokens {:2f904e245c1f5 :current-user})
 
 (defn token-authfn
   [request token]
