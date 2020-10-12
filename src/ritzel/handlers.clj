@@ -141,7 +141,9 @@
 (defn start-update [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
                      db-connection :db-connection}]
   ;; https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/updates.go#L91
-  (success {:version 1 :token "foobar42"}))
+  ;; increment version number
+  ;; set valid token for time of update
+  (success {:version 1 :token "eyJhbGciOiJIUzI1NiIsIm"}))
 
 ;; TODO store checkpoint in datahike, probably deployment as stringified json because cumbersome to spec
 ;; see doc/patchCheckpoint.json

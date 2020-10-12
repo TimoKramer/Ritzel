@@ -4,7 +4,7 @@
    [buddy.auth.backends :as buddy-auth-backends]
    [buddy.auth.middleware :as buddy-auth-middleware]))
 
-(def tokens {:2f904e245c1f5 :token-accepted})
+(def tokens {:2f904e245c1f5 :pulumi-user1})
 
 (defn token-authfn
   [request token]
@@ -18,7 +18,7 @@
   [handler]
   (buddy-auth-middleware/wrap-authentication handler token-backend))
 
-(def update-tokens {:eyJhbGciOiJIUzI1NiIsIm :update-token-accepted})
+(def update-tokens {:eyJhbGciOiJIUzI1NiIsIm :update-token})
 
 (defn update-token-authfn
   [request token]

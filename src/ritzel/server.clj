@@ -106,7 +106,7 @@
 
 (def routes
   ["/api"
-   #_["/swagger.json"
+   ["/swagger.json"
     {:get {:no-doc  true
            :swagger {:info {:title       "Ritzel API"
                             :description "Pulumi HTTP Backend"}}
@@ -149,191 +149,191 @@
              :middleware [middleware/token-auth middleware/auth]
              :handler handlers/project-exists?}}
      #_["/:stack-name"
-      {:swagger {:tags ["stacks"]}
-       :get    {:summery "Get stack."
-                :parameters {:header ::authorization-header}
-                :responses {200 {:body ::stack}}
-                :middleware [middleware/token-auth middleware/auth]
-                :handler handlers/get-stack}
-       :delete {:summary "Delete stack."
-                :parameters {:header ::authorization-header}
-                :responses {204 {}}
-                :middleware [middleware/token-auth middleware/auth]
-                :handler handlers/delete-stack}}
-      ["/export"
-       {:swagger {:tags ["stacks"]}
-        :get {:summary "Export stack."
-              :parameters {:header ::authorization-header}
-              :responses {200 {:body ::untyped-deployment}}
-              :middleware [middleware/token-auth middleware/auth]
-              :handler handlers/export-stack}}]
-      ["/import"
-       {:swagger {:tags ["stacks"]}
-        :post    {:summary "Import stack."
-                  :parameters {:header ::authorization-header
-                               :body ::untyped-deployment}
-                  :responses {200 {:body ::import-response}}
-                  :middleware [middleware/token-auth middleware/auth]
-                  :handler handlers/import-stack}}]
-      ; TODO might be good to use https://www.pulumi.com/docs/intro/concepts/config/#available-encryption-providers
-      #_["/encrypt"
-         {:swagger {:tags ["stacks" "API"]}
-          :post    {:summary "Encrypt value."
-                    :parameters {:header ::authorization-header
-                                 :body string?}
-                    :responses {200 {:body ::encrypt-decrypt}}
-                    :middleware [middleware/token-auth middleware/auth]
-                    :handler handlers/encrypt-value}}]
-      #_["/decrypt"
-         {:swagger {:tags ["stacks" "API"]}
-          :post    {:summary "Decrypt value."
-                    :parameters {:header ::authorization-header
-                                 :body ::encrypt-decrypt}
-                    :responses {200 {:body string?}}
-                    :middleware [middleware/token-auth middleware/auth]
-                    :handler handlers/decrypt-value}}]
-      ; TODO Get Logs seems not implemented
-      #_["/logs"
-         {:swagger {:tags ["stacks" "API"]}
-          :get     {:summary "Get stack logs."
-                    :middleware [middleware/token-auth middleware/auth]
-                    :handler handlers/get-stack-logs}}]
-      ; TODO Undocumentet in api_endpoints
-      #_["/rename"
-         {:swagger {:tags ["stacks" "API"]}
-          :post    {:summary "Decrypt value."
-                    :parameters {:header ::authorization-header
-                                 :body ::encrypt-decrypt}
-                    :responses {200 {:body string?}}
-                    :middleware [middleware/token-auth middleware/auth]
-                    :handler handlers/decrypt-value}}]
-      ["/tags"
-       {:swagger {:tags ["update"]}
-        :patch {:summary "Update stack tags, replace all existing tags."
-                :parameters {:header ::authorization-header
-                             :body ::tags}
-                :responses {204 {}}
-                :middleware [middleware/token-auth middleware/auth]
-                :handler handlers/update-tags}}]
-      ["/updates"
-       {:swagger {:tags ["update"]}
-        :get     {:summary "Get stack updates."
+        {:swagger {:tags ["stacks"]}
+         :get    {:summery "Get stack."
                   :parameters {:header ::authorization-header}
-                  :responses {200 {:body ::updates}}
+                  :responses {200 {:body ::stack}}
                   :middleware [middleware/token-auth middleware/auth]
-                  :handler handlers/get-stack-updates}}
-       ["/:version"
-        ;; TODO implement mocked handler
-        {:swagger {:tags ["update"]}
-         :conflicting true
-         :get     {:summary "Get stack update."
-                   :parameters {:header ::authorization-header}
-                   :responses {200 {:body ::info-update}}
-                   :middleware [middleware/token-auth middleware/auth]
-                   :handler handlers/get-stack-update}}
-        #_["/contents" ; TODO seems not implemented
-           ["/files"
-            {:swagger {:tags ["stacks" "API"]}
-             :get     {:summary "Get update contents files."
-                       :parameters {:header ::authorization-header}
-                       :responses {200 {:body ::latest-update}}
-                       :middleware [middleware/token-auth middleware/auth]
-                       :handler handlers/get-update-contents-files}}]
-           ["/file/*path"
-            {:swagger {:tags ["stacks" "API"]}
-             :get     {:summary "Get update contents file path."
-                       :parameters {:header ::authorization-header}
-                       :middleware [middleware/token-auth middleware/auth]
-                       :handler handlers/get-update-contents-file-path}}]]]]
-      ["/destroy"
-       {:swagger {:tags ["update"]}
-        :post {:summary "Destroy stack."
-               :parameters {:header ::authorization-header
-                            :body ::update-program-request}
-               :responses {200 {:body ::updateID}}
-               :middleware [middleware/token-auth middleware/auth]
-               :handler handlers/update-stack}}]
-      ["/preview"
-       {:swagger {:tags ["update"]}
-        :post {:summary "Preview stack."
-               :parameters {:header ::authorization-header
-                            :body ::update-program-request}
-               :responses {200 {:body ::updateID}}
-               :middleware [middleware/token-auth middleware/auth]
-               :handler handlers/update-stack}}]
-      ["/update"
-       {:swagger {:tags ["update"]}
-        :post {:summary "Update stack."
-               :parameters {:header ::authorization-header
-                            :body ::update-program-request}
-               :responses {200 {:body ::updateID}}
-               :middleware [middleware/token-auth middleware/auth]
-               :handler handlers/update-stack}}]
-      ["/refresh"
-       {:swagger {:tags ["update"]}
-        :post {:summary "Refresh stack."
-               :parameters {:header ::authorization-header
-                            :body ::update-program-request}
-               :responses {200 {:body ::updateID}}
-               :middleware [middleware/token-auth middleware/auth]
-               :handler handlers/update-stack}}]
-      ;; TODO implement mocked handler and solve route conflict with "/updates/:version"
-      ["/:update-kind/:update-id"
-       {:swagger {:tags ["update"]}
-        :conflicting true
-        :get {:summary "Get update status."
-              :parameters {:header ::authorization-header}
-              :responses {200 {:body map?}}
-              :middleware [middleware/token-auth middleware/auth]
-              :handler handlers/get-update-events}
-        :post {:summary "Start update."
-               :parameters {:header ::authorization-header
-                            :body ::tags}
-               :responses {200 {:body ::start-update-response}}
-               :middleware [middleware/token-auth middleware/auth]
-               :handler handlers/start-update}}
-       ;; TODO implement mocked handler
-       ["/checkpoint"
-        {:swagger {:tags ["update"]}
-         :patch {:summary "Patch checkpoint."
+                  :handler handlers/get-stack}
+         :delete {:summary "Delete stack."
+                  :parameters {:header ::authorization-header}
+                  :responses {204 {}}
+                  :middleware [middleware/token-auth middleware/auth]
+                  :handler handlers/delete-stack}}
+        ["/export"
+         {:swagger {:tags ["stacks"]}
+          :get {:summary "Export stack."
+                :parameters {:header ::authorization-header}
+                :responses {200 {:body ::untyped-deployment}}
+                :middleware [middleware/token-auth middleware/auth]
+                :handler handlers/export-stack}}]
+        ["/import"
+         {:swagger {:tags ["stacks"]}
+          :post    {:summary "Import stack."
+                    :parameters {:header ::authorization-header
+                                 :body ::untyped-deployment}
+                    :responses {200 {:body ::import-response}}
+                    :middleware [middleware/token-auth middleware/auth]
+                    :handler handlers/import-stack}}]
+      ; TODO might be good to use https://www.pulumi.com/docs/intro/concepts/config/#available-encryption-providers
+        #_["/encrypt"
+           {:swagger {:tags ["stacks" "API"]}
+            :post    {:summary "Encrypt value."
+                      :parameters {:header ::authorization-header
+                                   :body string?}
+                      :responses {200 {:body ::encrypt-decrypt}}
+                      :middleware [middleware/token-auth middleware/auth]
+                      :handler handlers/encrypt-value}}]
+        #_["/decrypt"
+           {:swagger {:tags ["stacks" "API"]}
+            :post    {:summary "Decrypt value."
+                      :parameters {:header ::authorization-header
+                                   :body ::encrypt-decrypt}
+                      :responses {200 {:body string?}}
+                      :middleware [middleware/token-auth middleware/auth]
+                      :handler handlers/decrypt-value}}]
+      ; TODO Get Logs seems not implemented
+        #_["/logs"
+           {:swagger {:tags ["stacks" "API"]}
+            :get     {:summary "Get stack logs."
+                      :middleware [middleware/token-auth middleware/auth]
+                      :handler handlers/get-stack-logs}}]
+      ; TODO Undocumentet in api_endpoints
+        #_["/rename"
+           {:swagger {:tags ["stacks" "API"]}
+            :post    {:summary "Decrypt value."
+                      :parameters {:header ::authorization-header
+                                   :body ::encrypt-decrypt}
+                      :responses {200 {:body string?}}
+                      :middleware [middleware/token-auth middleware/auth]
+                      :handler handlers/decrypt-value}}]
+        ["/tags"
+         {:swagger {:tags ["update"]}
+          :patch {:summary "Update stack tags, replace all existing tags."
+                  :parameters {:header ::authorization-header
+                               :body ::tags}
+                  :responses {204 {}}
+                  :middleware [middleware/token-auth middleware/auth]
+                  :handler handlers/update-tags}}]
+        ["/updates"
+         {:swagger {:tags ["update"]}
+          :get     {:summary "Get stack updates."
+                    :parameters {:header ::authorization-header}
+                    :responses {200 {:body ::updates}}
+                    :middleware [middleware/token-auth middleware/auth]
+                    :handler handlers/get-stack-updates}}
+         ["/:version"
+          ;; TODO implement mocked handler
+          {:swagger {:tags ["update"]}
+           :conflicting true
+           :get     {:summary "Get stack update."
+                     :parameters {:header ::authorization-header}
+                     :responses {200 {:body ::info-update}}
+                     :middleware [middleware/token-auth middleware/auth]
+                     :handler handlers/get-stack-update}}
+          #_["/contents" ; TODO seems not implemented
+             ["/files"
+              {:swagger {:tags ["stacks" "API"]}
+               :get     {:summary "Get update contents files."
+                         :parameters {:header ::authorization-header}
+                         :responses {200 {:body ::latest-update}}
+                         :middleware [middleware/token-auth middleware/auth]
+                         :handler handlers/get-update-contents-files}}]
+             ["/file/*path"
+              {:swagger {:tags ["stacks" "API"]}
+               :get     {:summary "Get update contents file path."
+                         :parameters {:header ::authorization-header}
+                         :middleware [middleware/token-auth middleware/auth]
+                         :handler handlers/get-update-contents-file-path}}]]]]
+        ["/destroy"
+         {:swagger {:tags ["update"]}
+          :post {:summary "Destroy stack."
                  :parameters {:header ::authorization-header
-                              :body ::untyped-deployment}
-                 :responses {204 {}}}
-         :middleware [middleware/update-token-auth middleware/auth]
-         :handler handlers/patch-checkpoint}]
-       ["/complete"
-        {:swagger {:tags ["update"]}
-         :post {:summary "Complete update."
-                :parameters {:header ::authorization-header
-                             :body ::complete-update-request}
-                :responses {204 {}}}
-         :middleware [middleware/update-token-auth middleware/auth]
-         :handler handlers/complete-update}]
-       ["/cancel"
-        {:swagger {:tags ["update"]}
-         :post {:summary "Cancel update."
-                :parameters {:header ::authorization-header
-                             :body ::complete-update-request}
-                :responses {204 {}}}
-         :middleware [middleware/update-token-auth middleware/auth]
-         :handler handlers/cancel-update}]
-       ["/events"] ;; TODO seems not in use
-       ["/events/batch"
-        {:swagger {:tags ["update"]}
-         :post {:summary "Post engine event batch."
-                :parameters {:header ::authorization-header
-                             :body ::post-engine-event-batch-request}
-                :responses {200 {}}}
-         :middleware [middleware/update-token-auth middleware/auth]
-         :handler handlers/post-engine-event-batch}]
-       ["/renew_lease"
-        {:swagger {:tags ["update"]}
-         :post {:summary "Renew lease."
-                :parameters {:header ::authorization-header
-                             :body ::renew-lease-request}
-                :responses {200 {}}}
-         :middleware [middleware/update-token-auth middleware/auth]
-         :handler handlers/renew-lease-token}]]]]]])
+                              :body ::update-program-request}
+                 :responses {200 {:body ::updateID}}
+                 :middleware [middleware/token-auth middleware/auth]
+                 :handler handlers/update-stack}}]
+        ["/preview"
+         {:swagger {:tags ["update"]}
+          :post {:summary "Preview stack."
+                 :parameters {:header ::authorization-header
+                              :body ::update-program-request}
+                 :responses {200 {:body ::updateID}}
+                 :middleware [middleware/token-auth middleware/auth]
+                 :handler handlers/update-stack}}]
+        ["/update"
+         {:swagger {:tags ["update"]}
+          :post {:summary "Update stack."
+                 :parameters {:header ::authorization-header
+                              :body ::update-program-request}
+                 :responses {200 {:body ::updateID}}
+                 :middleware [middleware/token-auth middleware/auth]
+                 :handler handlers/update-stack}}]
+        ["/refresh"
+         {:swagger {:tags ["update"]}
+          :post {:summary "Refresh stack."
+                 :parameters {:header ::authorization-header
+                              :body ::update-program-request}
+                 :responses {200 {:body ::updateID}}
+                 :middleware [middleware/token-auth middleware/auth]
+                 :handler handlers/update-stack}}]
+      ;; TODO implement mocked handler and solve route conflict with "/updates/:version"
+        ["/:update-kind/:update-id"
+         {:swagger {:tags ["update"]}
+          :conflicting true
+          :get {:summary "Get update status."
+                :parameters {:header ::authorization-header}
+                :responses {200 {:body map?}}
+                :middleware [middleware/token-auth middleware/auth]
+                :handler handlers/get-update-events}
+          :post {:summary "Start update."
+                 :parameters {:header ::authorization-header
+                              :body ::tags}
+                 :responses {200 {:body ::start-update-response}}
+                 :middleware [middleware/token-auth middleware/auth]
+                 :handler handlers/start-update}}
+         ;; TODO implement mocked handler
+         ["/checkpoint"
+          {:swagger {:tags ["update"]}
+           :patch {:summary "Patch checkpoint."
+                   :parameters {:header ::authorization-header
+                                :body ::untyped-deployment}
+                   :responses {204 {}}}
+           :middleware [middleware/update-token-auth middleware/auth]
+           :handler handlers/patch-checkpoint}]
+         ["/complete"
+          {:swagger {:tags ["update"]}
+           :post {:summary "Complete update."
+                  :parameters {:header ::authorization-header
+                               :body ::complete-update-request}
+                  :responses {204 {}}}
+           :middleware [middleware/update-token-auth middleware/auth]
+           :handler handlers/complete-update}]
+         ["/cancel"
+          {:swagger {:tags ["update"]}
+           :post {:summary "Cancel update."
+                  :parameters {:header ::authorization-header
+                               :body ::complete-update-request}
+                  :responses {204 {}}}
+           :middleware [middleware/update-token-auth middleware/auth]
+           :handler handlers/cancel-update}]
+         ["/events"] ;; TODO seems not in use
+         ["/events/batch"
+          {:swagger {:tags ["update"]}
+           :post {:summary "Post engine event batch."
+                  :parameters {:header ::authorization-header
+                               :body ::post-engine-event-batch-request}
+                  :responses {200 {}}}
+           :middleware [middleware/update-token-auth middleware/auth]
+           :handler handlers/post-engine-event-batch}]
+         ["/renew_lease"
+          {:swagger {:tags ["update"]}
+           :post {:summary "Renew lease."
+                  :parameters {:header ::authorization-header
+                               :body ::renew-lease-request}
+                  :responses {200 {}}}
+           :middleware [middleware/update-token-auth middleware/auth]
+           :handler handlers/renew-lease-token}]]]]]])
 
 (defn wrap-db-connection [handler]
   (fn [request]
@@ -354,7 +354,7 @@
    :exception pretty/exception
    :data      {:coercion   reitit.coercion.spec/coercion
                :muuntaja   muuntaja-instance
-               :middleware [;;swagger/swagger-feature
+               :middleware [swagger/swagger-feature
                             parameters/parameters-middleware
                             muuntaja/format-negotiate-middleware
                             muuntaja/format-response-middleware
@@ -368,7 +368,7 @@
   (-> (ring/ring-handler
        (ring/router routes route-opts)
        (ring/routes
-        #_(swagger-ui/create-swagger-ui-handler
+        (swagger-ui/create-swagger-ui-handler
          {:path   "/"
           :url    "/api/swagger.json"
           :config {:validatorUrl     nil
