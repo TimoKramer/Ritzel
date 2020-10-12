@@ -26,7 +26,7 @@
   (success))
 
 (defn create-stack [{:keys [db-connection body-params path-params]}]
-  (let [stack-name    (:stackName body-params)
+  (let [stack-name   (:stackName body-params)
         org-name     (:org-name path-params)
         project-name (:project-name path-params)
         tags         (:tags body-params)
@@ -66,9 +66,9 @@
     :orgName "mopedtobias"
     :projectName "foobar"
     :stackName "dev"
-    :tags {":gitHub:owner" "mopedtobias"
-           ":pulumi:description" "A minimal Azure Python program"
-           ":pulumi:runtime" "python"}}))
+    :tags {"gitHub:owner" "mopedtobias"
+           "pulumi:description" "A minimal Azure Python program"
+           "pulumi:runtime" "python"}}))
 
 (defn delete-stack [request]
   ;; TODO retract
@@ -121,11 +121,11 @@
 
 ;; TODO create update of kind update, preview, refresh, rename, destroy or import
 ;; https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/history.go#L23
-(defn -update-stack [{{:keys [org-name project-name stack-name] :as path-params} :path-params
-                      body-params :body-params
-                      db-connection :db-connection}
-                     update-kind]
-  (let [uuid (java.util.UUID/randomUUID)
+(defn update-stack [{{:keys [org-name project-name stack-name] :as path-params} :path-params
+                     body-params :body-params
+                     db-connection :db-connection}
+                    update-kind]
+  (let [uuid (str (java.util.UUID/randomUUID))
         _ (d/transact db-connection [{:stack/name stack-name
                                       :stack/org-name org-name
                                       :stack/project-name project-name
@@ -134,53 +134,6 @@
                                       :update/value body-params}])]
     (success {:updateID uuid})))
 
-(defn update-stack [params]
-  (-update-stack params :update))
-
-(defn destroy-stack [params]
-  (-update-stack params :destroy))
-
-(defn preview-stack [params]
-  (-update-stack params :preview))
-
-(comment
-  (update-stack {:path-params {:foo :bar} :body-params {:foo :bar} :db-connection :foo}) 
-  (uuid? (java.util.UUID/randomUUID))
-  (d/transact database/connection [{:update/uuid "f5c927c1-fb83-4e27-89f7-0d4f6fe16eec"
-                                    :update/body {:foo "bar"}}])
-  (type (int 3))
-  database/connection
-  (def conn (get database/connection "pulumi-db"))
-  (d/transact conn [{:db/ident :stack:name
-                     :db/valueType :db.type/string
-                     :db/cardinality :db.cardinality/one}
-                    {:db/ident :stack:org-name
-                     :db/valueType :db.type/string
-                     :db/cardinality :db.cardinality/one}
-                    {:db/ident :stack:project-name
-                     :db/valueType :db.type/string
-                     :db/cardinality :db.cardinality/one}
-                    {:db/ident :stack:last-update
-                     :db/valueType :db.type/long
-                     :db/cardinality :db.cardinality/one}
-                    {:db/ident :stack:resource-count
-                     :db/valueType :db.type/long
-                     :db/cardinality :db.cardinality/one}])
-  (get database/connection "pulumi-db")
-  conn
-  (d/datoms :stack:name)
-  (d/q '[:find ?e
-         :where [_ _ ?e]]
-       @database/connection)
-  (d/transact database/connection [{:stack:name "foobar"
-                                    :stack:org-name "foobar"
-                                    :stack:project-name "foobar"}])
-  (println (d/q '[:find ?e
-                  :where
-                  [?e :stack:name "moh"]
-                  [?e :stack:org-name "mopedtobias"]
-                  [?e :stack:project-name "foobar"]]
-                @database/connection)))
 ;; TODO check if update either succeeded, failed, running, requested or not started
 ;; https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/updates.go#L118
 (defn get-update-status [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
@@ -192,7 +145,46 @@
 ;; retrieve update results
 (defn get-update-events [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
                           db-connection :db-connection}]
-  (success))
+  (success {:continuationToken 0
+            :events []
+            :status "not started"}))
+
+(comment
+  (str (java.util.UUID/randomUUID))
+  (update-stack {:path-params {:foo :bar} :body-params {:foo :bar} :db-connection :foo}) 
+  (uuid? (java.util.UUID/randomUUID))
+  (d/transact database/connection [{:update/uuid "f5c927c1-fb83-4e27-89f7-0d4f6fe16eec"
+                                    :update/body {:foo "bar"}}])
+  database/connection
+  (def conn (get database/connection "pulumi-db"))
+  (d/transact database/connection [{:db/ident :stack:name
+                                    :db/valueType :db.type/string
+                                    :db/cardinality :db.cardinality/one}
+                                   {:db/ident :stack:org-name
+                                    :db/valueType :db.type/string
+                                    :db/cardinality :db.cardinality/one}
+                                   {:db/ident :stack:project-name
+                                    :db/valueType :db.type/string
+                                    :db/cardinality :db.cardinality/one}
+                                   {:db/ident :stack:last-update
+                                    :db/valueType :db.type/long
+                                    :db/cardinality :db.cardinality/one}
+                                   {:db/ident :stack:resource-count
+                                    :db/valueType :db.type/long
+                                    :db/cardinality :db.cardinality/one}])
+  (get database/connection "pulumi-db")
+  conn
+  (d/datoms database/connection :eavt)
+  (d/q '[:find ?e
+         :where [_ _ ?e]]
+       @database/connection)
+  (d/transact database/connection [{:stack:name "foobar"
+                                    :stack:org-name "foobar"
+                                    :stack:project-name "foobar"}])
+  (d/q '[:find ?e
+         :where
+         [?e :stack:name _]]
+        @database/connection))
 
 (defn start-update [{{:keys [org-name project-name stack-name update-kind update-id]} :path-params
                      {:keys [tags]} :body-params

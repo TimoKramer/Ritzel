@@ -30,7 +30,7 @@
 (s/def ::orgName string?)
 (s/def ::version int?)
 (s/def ::activeUpdate string?)
-(s/def ::updateID uuid?)
+(s/def ::updateID string?)
 (s/def ::ciphertext string?)
 (s/def ::config map?) ;; TODO string,secret,object https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/core.go#L324
 (s/def ::endTime int?)
@@ -228,6 +228,7 @@
        ["/:version"
         ;; TODO implement mocked handler
         {:swagger {:tags ["stacks"]}
+         :conflicting true
          :get     {:summary "Get stack update."
                    :parameters {:header ::authorization-header}
                    :responses {200 {:body ::info-update}}
@@ -273,63 +274,65 @@
                              :body ::update-program-request}
                 :responses {200 {:body ::stack-response}}
                 :middleware [middleware/token-auth middleware/auth]
-                :handler handlers/update-stack}}]
-       ["/:update-kind/:update-id"
-        [""
-         {:swagger {:tags ["update"]}
-          :get {:summary "Get update status."
-                :parameters {:header ::authorization-header}
-                :responses {200 {:body map?}}
+                :handler (fn [params]
+                           (handlers/update-stack params :update))}}]]
+      ["/:update-kind/:update-id"
+       [""
+        {:swagger {:tags ["update"]}
+         :conflicting true
+         :get {:summary "Get update status."
+               :parameters {:header ::authorization-header}
+               :responses {200 {:body map?}}
+               :middleware [middleware/token-auth middleware/auth]
+               :handler handlers/get-update-events}
+         :post {:summary "Start update."
+                :parameters {:header ::authorization-header
+                             :body ::start-update-request}
+                :responses {200 {:body ::start-update-response}}
                 :middleware [middleware/token-auth middleware/auth]
-                :handler handlers/get-update-events}
-          :post {:summary "Start update."
+                :handler handlers/start-update}}]
+       ;; TODO implement mocked handler
+       ["/checkpoint"
+        {:swagger {:tags ["update"]}
+         :patch {:summary "Patch checkpoint."
                  :parameters {:header ::authorization-header
-                              :body ::tags}
-                 :responses {200 {:body ::start-update-response}}
-                 :middleware [middleware/token-auth middleware/auth]
-                 :handler handlers/start-update}}]
-        ;; TODO implement mocked handler
-        ["/checkpoint"
-         {:swagger {:tags ["update"]}
-          :patch {:summary "Patch checkpoint."
-                  :parameters {:header ::authorization-header
-                               :body ::untyped-deployment}
-                  :responses {204 {}}
-                  :middleware [middleware/update-token-auth middleware/auth]
-                  :handler handlers/patch-checkpoint}}]
-        ["/complete"
-         {:swagger {:tags ["update"]}
-          :post {:summary "Complete update."
-                 :parameters {:header ::authorization-header
-                              :body ::complete-update-request}
+                              :body ::untyped-deployment}
                  :responses {204 {}}
                  :middleware [middleware/update-token-auth middleware/auth]
-                 :handler handlers/complete-update}}]
-        ["/cancel"
-         {:swagger {:tags ["update"]}
-          :post {:summary "Cancel update."
-                 :parameters {:header ::authorization-header
-                              :body ::complete-update-request}
-                 :responses {204 {}}
-                 :middleware [middleware/update-token-auth middleware/auth]
-                 :handler handlers/cancel-update}}]
-        #_["/events"] ;; TODO seems not in use
-        ["/events/batch"
-         {:swagger {:tags ["update"]}
-          :post {:summary "Post engine event batch."
-                 :parameters {:header ::authorization-header
-                              :body ::post-engine-event-batch-request}
-                 :responses {200 {}}
-                 :middleware [middleware/update-token-auth middleware/auth]
-                 :handler handlers/post-engine-event-batch}}]
-        ["/renew_lease"
-         {:swagger {:tags ["update"]}
-          :post {:summary "Renew lease."
-                 :parameters {:header ::authorization-header
-                              :body ::renew-lease-request}
-                 :responses {200 {}}
-                 :middleware [middleware/update-token-auth middleware/auth]
-                 :handler handlers/renew-lease-token}}]]]]]]])
+                 :handler handlers/patch-checkpoint}}]
+       ["/complete"
+        {:swagger {:tags ["update"]}
+         :post {:summary "Complete update."
+                :parameters {:header ::authorization-header
+                             :body ::complete-update-request}
+                :responses {204 {}}
+                :middleware [middleware/update-token-auth middleware/auth]
+                :handler handlers/complete-update}}]
+       ["/cancel"
+        {:swagger {:tags ["update"]}
+         :post {:summary "Cancel update."
+                :parameters {:header ::authorization-header
+                             :body ::complete-update-request}
+                :responses {204 {}}
+                :middleware [middleware/update-token-auth middleware/auth]
+                :handler handlers/cancel-update}}]
+       #_["/events"] ;; TODO seems not in use
+       ["/events/batch"
+        {:swagger {:tags ["update"]}
+         :post {:summary "Post engine event batch."
+                :parameters {:header ::authorization-header
+                             :body ::post-engine-event-batch-request}
+                :responses {200 {}}
+                :middleware [middleware/update-token-auth middleware/auth]
+                :handler handlers/post-engine-event-batch}}]
+       ["/renew_lease"
+        {:swagger {:tags ["update"]}
+         :post {:summary "Renew lease."
+                :parameters {:header ::authorization-header
+                             :body ::renew-lease-request}
+                :responses {200 {}}
+                :middleware [middleware/update-token-auth middleware/auth]
+                :handler handlers/renew-lease-token}}]]]]]])
 
 (defn wrap-db-connection [handler]
   (fn [request]
