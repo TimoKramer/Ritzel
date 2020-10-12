@@ -48,7 +48,7 @@
 (s/def ::showReplacementSteps boolean?)
 (s/def ::showNames boolean?) ; showSames == showNames ??
 (s/def ::name ::projectName)
-(s/def ::runtime #{:python :go :dotnet :nodejs})
+(s/def ::runtime #{"python" "go" "dotnet" "nodejs"})
 (s/def ::main string?)
 (s/def ::description string?)
 (s/def ::metadata map?)
@@ -87,6 +87,7 @@
                                   ::showConfig
                                   ::showReplacementSteps
                                   ::showNames]))
+(s/def ::createUpdateResponse (s/keys :req-un [::updateID]))
 ;;https://github.com/pulumi/pulumi/blob/master/pkg/backend/httpstate/client/client.go#L448
 ;;https://github.com/pulumi/pulumi/blob/master/sdk/go/common/apitype/updates.go#L30
 (s/def ::update-program-request (s/keys :req-un [::name
@@ -253,7 +254,7 @@
          :post {:summary "Create update of type destroy"
                 :parameters {:header ::authorization-header
                              :body ::update-program-request}
-                :responses {200 {:body ::updateID}}
+                :responses {200 {:body ::createUpdateResponse}}
                 :middleware [middleware/token-auth middleware/auth]
                 :handler handlers/update-stack}}]]
       ["/preview"
@@ -262,7 +263,7 @@
          :post {:summary "Create update of type preview"
                 :parameters {:header ::authorization-header
                              :body ::update-program-request}
-                :responses {200 {:body ::updateID}}
+                :responses {200 {:body ::createUpdateResponse}}
                 :middleware [middleware/token-auth middleware/auth]
                 :handler handlers/update-stack}}]]
       ["/update"
@@ -271,7 +272,7 @@
          :post {:summary "Create update of type update"
                 :parameters {:header ::authorization-header
                              :body ::update-program-request}
-                :responses {200 {:body ::updateID}}
+                :responses {200 {:body ::createUpdateResponse}}
                 :middleware [middleware/token-auth middleware/auth]
                 :handler handlers/update-stack}}]
        ["/:update-kind/:update-id"
